@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { FiHeart, FiShoppingBag } from 'react-icons/fi';
 import Button from './Button';
 
-export default function ProductCard({ product, isWholesale = false }) {
+export default function ProductCard({ product, isWholesale = false, onQuickAdd }) {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -17,7 +17,7 @@ export default function ProductCard({ product, isWholesale = false }) {
     >
       {/* Image Container */}
       <div className="relative aspect-[4/5] overflow-hidden bg-neutral-900 mb-4">
-        <Link to={isWholesale ? '/wholesale' : `/shop/${product.id}`}>
+        <Link to={isWholesale ? '/wholesale' : `/shop/${product._id}`}>
           <motion.img 
             src={isHovered && product.hoverImage ? product.hoverImage : product.image}
             alt={product.name}
@@ -30,14 +30,14 @@ export default function ProductCard({ product, isWholesale = false }) {
 
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-col gap-2">
-          {product.isNew && !isWholesale && (
+          {product.discountBadge && !isWholesale && (
             <span className="bg-accent text-primary text-xs font-bold px-2 py-1 uppercase tracking-wider">
-              New Drop
+              {product.discountBadge}
             </span>
           )}
-          {product.stock < 10 && !isWholesale && (
+          {product.stockStatus !== 'In Stock' && !isWholesale && (
             <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 uppercase tracking-wider">
-              Only {product.stock} Left
+              {product.stockStatus}
             </span>
           )}
           {isWholesale && (
@@ -64,8 +64,8 @@ export default function ProductCard({ product, isWholesale = false }) {
               <FiShoppingBag /> Build Bulk Order
             </Button>
           ) : (
-            <Button variant="secondary" size="sm" className="w-full bg-white text-primary hover:bg-accent flex gap-2">
-              <FiShoppingBag /> Quick Add
+            <Button variant="secondary" size="sm" className="w-full bg-white text-primary hover:bg-accent flex gap-2" onClick={() => onQuickAdd && onQuickAdd(product)}>
+              <FiShoppingBag /> Buy Now
             </Button>
           )}
         </motion.div>

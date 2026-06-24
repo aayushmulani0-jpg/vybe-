@@ -1,29 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { FiDownload, FiCheckCircle, FiZap, FiBookOpen } from 'react-icons/fi';
 import Button from '../components/ui/Button';
-
-const PRINT_STYLES = [
-  // Front Prints
-  { name: 'Left Chest Logo', cost: 20, category: 'Front', size: '8–10 × 8–10 cm' },
-  { name: 'Chest Design (15×7 cm)', cost: 35, category: 'Front', size: '15 × 7 cm' },
-  { name: 'Center Chest Design', cost: 40, category: 'Front', size: '20–25 × 20–25 cm' },
-  { name: 'Front Graphic (A4)', cost: 50, category: 'Front', size: '21 × 29.7 cm' },
-  { name: 'Large Front Graphic (A3)', cost: 70, category: 'Front', size: '29.7 × 42 cm' },
-  // Back Prints
-  { name: 'Small Upper Back Logo', cost: 25, category: 'Back', size: '10–15 × 7–10 cm' },
-  { name: 'Medium Back Graphic (A4)', cost: 50, category: 'Back', size: '21 × 29.7 cm' },
-  { name: 'Large Back Graphic (A3)', cost: 80, category: 'Back', size: '29.7 × 42 cm' },
-  // Sleeve Prints
-  { name: 'Small Sleeve Logo', cost: 15, category: 'Sleeve', size: '5 × 5 cm' },
-  { name: 'Sleeve Typography', cost: 20, category: 'Sleeve', size: '10 × 4 cm' },
-  // Other Placements
-  { name: 'Neck Print (Inside)', cost: 15, category: 'Other', size: '6 × 4 cm' },
-  { name: 'Outside Neck Print', cost: 15, category: 'Other', size: '8 × 4 cm' },
-  { name: 'Bottom Hem Print', cost: 20, category: 'Other', size: '10 × 5 cm' },
-  { name: 'Pocket Area Print', cost: 20, category: 'Other', size: '8 × 8 cm' },
-];
+import { API_URL } from '../config';
 
 const PRINT_CATEGORIES = [
   { key: 'Front', label: 'Front Prints', icon: '👕' },
@@ -53,48 +33,72 @@ const COMBO_PRESETS = [
   },
 ];
 
-const CATEGORIES = [
-  { name: 'Oversized T-Shirts (220 GSM)', baseCost: 0 },
-  { name: 'Classic Fit T-Shirts (180 GSM)', baseCost: -30 },
-  { name: 'Heavyweight Hoodies (350 GSM)', baseCost: 400 },
-];
-
 export default function Wholesale() {
   const navigate = useNavigate();
+  const [catalogue, setCatalogue] = useState(null);
   const [quantity, setQuantity] = useState(15);
-  const [selectedCategory, setSelectedCategory] = useState(CATEGORIES[0]);
+  const [selectedItem, setSelectedItem] = useState(null);
   const [selectedPrints, setSelectedPrints] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`${API_URL}/catalogues/live`)
+      .then(res => res.json())
+      .then(data => {
+        setCatalogue(data);
+        if (data && data.items && data.items.length > 0) {
+          setSelectedItem(data.items[0]);
+          setQuantity(data.items[0].moq || 15);
+        }
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Failed to fetch live catalogue:", err);
+        setLoading(false);
+      });
+  }, []);
+
+  const printStyles = useMemo(() => {
+    if (!catalogue || !catalogue.printPricing) return [];
+    return catalogue.printPricing.map(p => {
+      // Map to category based on name keywords if possible
+      let cat = 'Other';
+      if (p.sizeName.toLowerCase().includes('front') || p.sizeName.toLowerCase().includes('chest')) cat = 'Front';
+      if (p.sizeName.toLowerCase().includes('back')) cat = 'Back';
+      if (p.sizeName.toLowerCase().includes('sleeve')) cat = 'Sleeve';
+      
+      return {
+        name: p.sizeName,
+        cost: p.price,
+        category: cat,
+        size: p.dimensionsCm,
+        id: p._id
+      };
+    });
+  }, [catalogue]);
 
   // Pricing Logic
   const pricingDetails = useMemo(() => {
     let q = Math.max(0, parseInt(quantity) || 0);
+    let minQty = selectedItem ? selectedItem.moq : 15;
 
-    // Determine Base Price
-    let basePrice = 0;
-    if (q >= 15 && q <= 30) {
-      basePrice = 485;
-    } else if (q > 30) {
-      basePrice = 450;
-    }
-
-    // Add category modifier and print cost
-    let finalBasePrice = basePrice > 0 ? basePrice + selectedCategory.baseCost : 0;
-
+    let basePrice = selectedItem ? selectedItem.wholesalePrice : 0;
     let totalPrintCost = selectedPrints.reduce((acc, print) => acc + print.cost, 0);
 
-    let pricePerPiece = finalBasePrice > 0 ? finalBasePrice + totalPrintCost : 0;
+    let pricePerPiece = basePrice > 0 ? basePrice + totalPrintCost : 0;
     let totalAmount = pricePerPiece * q;
 
     return {
-      isValid: q >= 15,
-      basePrice: finalBasePrice,
+      isValid: q >= minQty,
+      basePrice: basePrice,
       printCost: totalPrintCost,
       printNames: selectedPrints.length > 0 ? selectedPrints.map(p => p.name).join(' + ') : 'Blank',
       pricePerPiece,
       totalAmount,
-      q
+      q,
+      minQty
     };
-  }, [quantity, selectedCategory, selectedPrints]);
+  }, [quantity, selectedItem, selectedPrints]);
 
   const togglePrint = (style) => {
     setSelectedPrints(prev => {
@@ -109,10 +113,56 @@ export default function Wholesale() {
 
   const applyCombo = (combo) => {
     const prints = combo.prints
-      .map(name => PRINT_STYLES.find(s => s.name === name))
+      .map(name => printStyles.find(s => s.name === name))
       .filter(Boolean);
     setSelectedPrints(prints);
   };
+
+  const handlePlaceWholesaleOrder = async () => {
+    if (!selectedItem || !pricingDetails.isValid) return;
+    
+    try {
+      const payload = {
+        orderType: "Wholesale",
+        company: "Guest Company", // placeholder
+        contact: "guest@company.com", // placeholder
+        shippingAddress: "To be added", // placeholder
+        itemsList: [
+          { 
+            productId: selectedItem.productId._id || selectedItem.productId, 
+            name: selectedItem.productId.name || 'Blank Item', 
+            qty: pricingDetails.q, 
+            price: pricingDetails.pricePerPiece,
+            image: selectedItem.productId.image 
+          }
+        ]
+      };
+
+      const response = await fetch(`${API_URL}/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        alert("Wholesale order placed successfully!");
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to place wholesale order: ${errorData.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error("Checkout error:", error);
+      alert("Error placing wholesale order.");
+    }
+  };
+
+  if (loading) {
+    return <div className="min-h-screen pt-24 flex items-center justify-center text-gray-400">Loading wholesale catalogue...</div>;
+  }
+
+  if (!catalogue) {
+    return <div className="min-h-screen pt-24 flex items-center justify-center text-gray-400">No live catalogue available right now.</div>;
+  }
 
   return (
     <div className="min-h-screen pt-24 pb-20 bg-primary">
@@ -122,7 +172,7 @@ export default function Wholesale() {
           Wholesale <span className="text-accent italic">Partner</span>
         </h1>
         <p className="text-gray-400 max-w-2xl mx-auto font-body text-lg mb-10">
-          Start your clothing brand with our premium blanks and DTF printing. MOQ starts at just 15 pieces.
+          Start your clothing brand with our premium blanks and DTF printing. MOQ applies based on catalogue.
         </p>
         <div className="flex flex-col sm:flex-row justify-center gap-4">
           <Button variant="accent" size="lg" className="flex items-center gap-2" onClick={() => navigate('/catalogue')}>
@@ -147,19 +197,25 @@ export default function Wholesale() {
             {/* Category Selector */}
             <div className="mb-8">
               <label className="block text-secondary font-heading font-semibold uppercase tracking-wider mb-4">
-                1. Select Category
+                1. Select Product
               </label>
               <div className="space-y-3">
-                {CATEGORIES.map(cat => (
-                  <label key={cat.name} className="flex items-center p-4 border border-white/10 rounded-sm cursor-pointer hover:border-accent transition-colors">
+                {catalogue.items.map(item => (
+                  <label key={item._id} className="flex items-center p-4 border border-white/10 rounded-sm cursor-pointer hover:border-accent transition-colors">
                     <input
                       type="radio"
                       name="category"
                       className="accent-accent w-4 h-4 mr-4"
-                      checked={selectedCategory.name === cat.name}
-                      onChange={() => setSelectedCategory(cat)}
+                      checked={selectedItem && selectedItem._id === item._id}
+                      onChange={() => {
+                        setSelectedItem(item);
+                        setQuantity(Math.max(quantity, item.moq));
+                      }}
                     />
-                    <span className="text-gray-300 font-body">{cat.name}</span>
+                    <div className="flex flex-col">
+                      <span className="text-gray-300 font-body">{item.productId.name || 'Unknown Product'}</span>
+                      <span className="text-xs text-gray-500">Wholesale: ₹{item.wholesalePrice} | MOQ: {item.moq}</span>
+                    </div>
                   </label>
                 ))}
               </div>
@@ -168,7 +224,7 @@ export default function Wholesale() {
             {/* Print Style Selector — Grouped by Category */}
             <div className="mb-8">
               <label className="block text-secondary font-heading font-semibold uppercase tracking-wider mb-4">
-                2. Select Print Styles
+                2. Select Print Styles (Optional)
               </label>
 
               {/* Combo Presets */}
@@ -194,7 +250,8 @@ export default function Wholesale() {
               {/* Print Styles by Category */}
               <div className="space-y-6">
                 {PRINT_CATEGORIES.map(cat => {
-                  const styles = PRINT_STYLES.filter(s => s.category === cat.key);
+                  const styles = printStyles.filter(s => s.category === cat.key);
+                  if (styles.length === 0) return null;
                   return (
                     <div key={cat.key}>
                       <p className="text-gray-500 text-xs font-body uppercase tracking-wider mb-3 flex items-center gap-2">
@@ -239,17 +296,17 @@ export default function Wholesale() {
             {/* Quantity Input */}
             <div className="mb-8">
               <label className="block text-secondary font-heading font-semibold uppercase tracking-wider mb-4">
-                3. Enter Quantity (Min 15)
+                3. Enter Quantity (Min {pricingDetails.minQty})
               </label>
               <input
                 type="number"
-                min="15"
+                min={pricingDetails.minQty}
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
                 className="w-full bg-primary border border-white/10 text-secondary px-4 py-4 rounded-sm focus:outline-none focus:border-accent transition-colors font-body text-xl"
               />
               {!pricingDetails.isValid && (
-                <p className="text-red-500 text-sm mt-2 font-body">Minimum Order Quantity (MOQ) is 15 pieces.</p>
+                <p className="text-red-500 text-sm mt-2 font-body">Minimum Order Quantity (MOQ) is {pricingDetails.minQty} pieces.</p>
               )}
             </div>
           </div>
@@ -293,25 +350,32 @@ export default function Wholesale() {
                 </ul>
               </div>
 
-              <Button
-                variant="accent"
-                size="lg"
-                className="w-full"
-                disabled={!pricingDetails.isValid || selectedPrints.length === 0}
-                onClick={() => navigate('/wholesale/upload', {
-                  state: {
-                    selectedPrints,
-                    pricingDetails,
-                    selectedCategory,
-                  }
-                })}
-              >
-                Proceed to Design Upload
-              </Button>
-              {selectedPrints.length === 0 && pricingDetails.isValid && (
-                <p className="text-yellow-500/80 text-xs text-center mt-3 font-body">
-                  Please select at least one print style above
-                </p>
+              {selectedPrints.length > 0 ? (
+                <Button
+                  variant="accent"
+                  size="lg"
+                  className="w-full"
+                  disabled={!pricingDetails.isValid}
+                  onClick={() => navigate('/wholesale/upload', {
+                    state: {
+                      selectedPrints,
+                      pricingDetails,
+                      selectedCategory: selectedItem,
+                    }
+                  })}
+                >
+                  Proceed to Design Upload
+                </Button>
+              ) : (
+                <Button
+                  variant="accent"
+                  size="lg"
+                  className="w-full bg-blue-600 hover:bg-blue-700 border-blue-600 text-white"
+                  disabled={!pricingDetails.isValid}
+                  onClick={handlePlaceWholesaleOrder}
+                >
+                  Place Wholesale Order (Blanks)
+                </Button>
               )}
             </div>
           </div>

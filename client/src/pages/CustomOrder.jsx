@@ -1,30 +1,11 @@
-import { useState, useCallback, useRef, useMemo } from 'react';
+import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiUploadCloud, FiTrash2, FiCheckCircle, FiImage,
   FiZoomIn, FiZoomOut, FiZap, FiShoppingCart, FiPackage
 } from 'react-icons/fi';
 import Button from '../components/ui/Button';
-
-/* ═══════════════════════════════════════════════════════════════
- *  PRINT STYLES — same zones as wholesale, used for style selection
- * ═══════════════════════════════════════════════════════════════ */
-const PRINT_STYLES = [
-  { name: 'Left Chest Logo', cost: 49, category: 'Front', size: '8–10 × 8–10 cm' },
-  { name: 'Chest Design (15×7 cm)', cost: 79, category: 'Front', size: '15 × 7 cm' },
-  { name: 'Center Chest Design', cost: 99, category: 'Front', size: '20–25 × 20–25 cm' },
-  { name: 'Front Graphic (A4)', cost: 129, category: 'Front', size: '21 × 29.7 cm' },
-  { name: 'Large Front Graphic (A3)', cost: 179, category: 'Front', size: '29.7 × 42 cm' },
-  { name: 'Small Upper Back Logo', cost: 59, category: 'Back', size: '10–15 × 7–10 cm' },
-  { name: 'Medium Back Graphic (A4)', cost: 129, category: 'Back', size: '21 × 29.7 cm' },
-  { name: 'Large Back Graphic (A3)', cost: 199, category: 'Back', size: '29.7 × 42 cm' },
-  { name: 'Small Sleeve Logo', cost: 39, category: 'Sleeve', size: '5 × 5 cm' },
-  { name: 'Sleeve Typography', cost: 49, category: 'Sleeve', size: '10 × 4 cm' },
-  { name: 'Neck Print (Inside)', cost: 39, category: 'Other', size: '6 × 4 cm' },
-  { name: 'Outside Neck Print', cost: 39, category: 'Other', size: '8 × 4 cm' },
-  { name: 'Bottom Hem Print', cost: 49, category: 'Other', size: '10 × 5 cm' },
-  { name: 'Pocket Area Print', cost: 49, category: 'Other', size: '8 × 8 cm' },
-];
+import { API_URL } from '../config';
 
 const PRINT_CATEGORIES = [
   { key: 'Front', label: 'Front Prints', icon: '👕' },
@@ -51,7 +32,7 @@ const COMBO_PRESETS = [
   },
 ];
 
-const BASE_TSHIRT_PRICE = 499;
+const DEFAULT_BASE_TSHIRT_PRICE = 499;
 
 /* ═══════════════════════════════════════════════════════════════
  *  PROPORTIONAL ZONE MAP — SVG coordinate space (viewBox 0 0 400 480)
@@ -157,6 +138,46 @@ export default function CustomOrder() {
   const [designScales, setDesignScales] = useState({});
   const [currentView, setCurrentView] = useState('front');
   const [quantity, setQuantity] = useState(1);
+  const [catalogue, setCatalogue] = useState(null);
+  const [catalogueProduct, setCatalogueProduct] = useState(null);
+  const [baseTshirtPrice, setBaseTshirtPrice] = useState(DEFAULT_BASE_TSHIRT_PRICE);
+
+  // ── Fetch live catalogue for print pricing ──
+  useEffect(() => {
+    fetch(`${API_URL}/catalogues/live`)
+      .then(res => res.json())
+      .then(data => {
+        setCatalogue(data);
+        // Use the first catalogue item's wholesalePrice as the base price if available
+        if (data && data.items && data.items.length > 0) {
+          setCatalogueProduct(data.items[0]);
+          setBaseTshirtPrice(data.items[0].wholesalePrice || DEFAULT_BASE_TSHIRT_PRICE);
+        }
+      })
+      .catch(err => console.error("Failed to fetch live catalogue:", err));
+  }, []);
+
+  // ── Build print styles dynamically from catalogue ──
+  const PRINT_STYLES = useMemo(() => {
+    if (!catalogue || !catalogue.printPricing || catalogue.printPricing.length === 0) {
+      // Fallback to empty — UI will show "no prints available"
+      return [];
+    }
+    return catalogue.printPricing.map(p => {
+      let cat = 'Other';
+      const lower = p.sizeName.toLowerCase();
+      if (lower.includes('front') || lower.includes('chest')) cat = 'Front';
+      if (lower.includes('back')) cat = 'Back';
+      if (lower.includes('sleeve')) cat = 'Sleeve';
+      return {
+        name: p.sizeName,
+        cost: p.price,
+        category: cat,
+        size: p.dimensionsCm,
+        _id: p._id
+      };
+    });
+  }, [catalogue]);
 
   // ── Derived ──
   const activeZones = useMemo(() =>
@@ -176,15 +197,15 @@ export default function CustomOrder() {
   const pricing = useMemo(() => {
     const q = Math.max(1, parseInt(quantity) || 1);
     const printCost = selectedPrints.reduce((acc, p) => acc + p.cost, 0);
-    const perPiece = BASE_TSHIRT_PRICE + printCost;
+    const perPiece = baseTshirtPrice + printCost;
     return {
-      base: BASE_TSHIRT_PRICE,
+      base: baseTshirtPrice,
       printCost,
       perPiece,
       total: perPiece * q,
       q,
     };
-  }, [selectedPrints, quantity]);
+  }, [selectedPrints, quantity, baseTshirtPrice]);
 
   const totalUploaded = Object.keys(uploadedFiles).length;
   const totalRequired = activeZones.length;
@@ -223,6 +244,47 @@ export default function CustomOrder() {
       setActiveZone(prints[0].name);
       const zone = PRINT_ZONE_MAP[prints[0].name];
       if (zone) setCurrentView(zone.view);
+    }
+  };
+
+  // ── Place Custom Print Order ──
+  const handlePlaceOrder = async () => {
+    if (!isReady) return;
+    try {
+      const productId = catalogueProduct?.productId?._id || catalogueProduct?.productId || '';
+      const productName = catalogueProduct?.productId?.name || 'Custom Print T-Shirt';
+      const productImage = catalogueProduct?.productId?.image || '';
+
+      const payload = {
+        orderType: 'CustomPrint',
+        customer: 'Guest User',
+        baseProduct: productName,
+        printLocation: selectedPrints.map(p => p.name).join(', '),
+        color: '#000000',
+        itemsList: selectedPrints.map(p => ({
+          productId: productId,
+          qty: pricing.q,
+          sizeName: p.name,
+          name: productName,
+          image: productImage,
+        })),
+      };
+
+      const response = await fetch(`${API_URL}/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        alert('Custom print order placed successfully!');
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to place order: ${errorData.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      alert('Error placing order.');
     }
   };
 
@@ -741,6 +803,7 @@ export default function CustomOrder() {
                 size="lg"
                 className="w-full mt-5"
                 disabled={!isReady}
+                onClick={handlePlaceOrder}
               >
                 {selectedPrints.length === 0
                   ? 'Select Print Styles'

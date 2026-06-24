@@ -1,48 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiFilter, FiX, FiSearch } from 'react-icons/fi';
 import ProductCard from '../components/ui/ProductCard';
 import Button from '../components/ui/Button';
-
-// Dummy products with sizes and print size options
-const ALL_PRODUCTS = [
-  {
-    id: 1, name: "Akira Cyber Tee", price: 549, mrp: 699, colors: 2, isNew: true, stock: 50,
-    image: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&q=80&w=800",
-    hoverImage: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=800",
-    sizes: ['M', 'L', 'Oversized'], printSizes: ['A3', 'Front + Back']
-  },
-  {
-    id: 2, name: "Minimal Essential Oversized", price: 549, mrp: 699, colors: 4, isNew: true, stock: 8,
-    image: "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&q=80&w=800",
-    hoverImage: "https://images.unsplash.com/photo-1503341455253-b2e723bb3db8?auto=format&fit=crop&q=80&w=800",
-    sizes: ['S', 'M', 'L', 'XL', 'Oversized'], printSizes: ['Left Chest Logo', 'A4']
-  },
-  {
-    id: 3, name: "Tokyo Drift Graphic", price: 699, mrp: 899, colors: 1, isNew: true, stock: 15,
-    image: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&q=80&w=800",
-    hoverImage: "https://images.unsplash.com/photo-1529374255404-311a2a4f1fd9?auto=format&fit=crop&q=80&w=800",
-    sizes: ['M', 'L', 'XL'], printSizes: ['A3', 'Sleeve Print']
-  },
-  {
-    id: 4, name: "Vintage Washed Black", price: 499, mrp: 699, colors: 3, isNew: false, stock: 100,
-    image: "https://images.unsplash.com/photo-1618354691373-d851c5c3a990?auto=format&fit=crop&q=80&w=800",
-    hoverImage: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&q=80&w=800",
-    sizes: ['S', 'M', 'L'], printSizes: ['Left Chest Logo', 'A4', 'A3']
-  },
-  {
-    id: 5, name: "Acid Wash Graphic Tee", price: 649, mrp: 899, colors: 1, isNew: false, stock: 30,
-    image: "https://images.unsplash.com/photo-1529374255404-311a2a4f1fd9?auto=format&fit=crop&q=80&w=800",
-    hoverImage: "https://images.unsplash.com/photo-1503341455253-b2e723bb3db8?auto=format&fit=crop&q=80&w=800",
-    sizes: ['L', 'XL', 'Oversized'], printSizes: ['A3', 'Front + Back']
-  },
-  {
-    id: 6, name: "Signature Logo Hoodie", price: 1299, mrp: 1999, colors: 2, isNew: false, stock: 45,
-    image: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&q=80&w=800",
-    hoverImage: "https://images.unsplash.com/photo-1556821840-02c34273574c?auto=format&fit=crop&q=80&w=800",
-    sizes: ['S', 'M', 'L', 'XL'], printSizes: ['Left Chest Logo', 'Front + Back']
-  }
-];
+import { API_URL } from '../config';
 
 const AVAILABLE_SIZES = ['S', 'M', 'L', 'XL', 'Oversized'];
 const AVAILABLE_PRINT_SIZES = ['Left Chest Logo', '15 × 7 cm', 'A4', 'A3', 'Sleeve Print', 'Front + Back'];
@@ -53,10 +14,70 @@ export default function Shop() {
   const [priceRange, setPriceRange] = useState([0, 2000]);
   const [selectedSizes, setSelectedSizes] = useState([]);
   const [selectedPrintSizes, setSelectedPrintSizes] = useState([]);
+  
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`${API_URL}/products`)
+      .then(res => res.json())
+      .then(data => {
+        // Filter out products that are not in stock
+        const inStockProducts = data.filter(p => p.stockStatus === 'In Stock');
+        // ensure products have necessary arrays for the mock filters to work without crashing, though real backend schema doesn't have sizes/printSizes yet
+        const mappedProducts = inStockProducts.map(p => ({
+          ...p,
+          sizes: p.sizes || AVAILABLE_SIZES,
+          printSizes: p.printSizes || AVAILABLE_PRINT_SIZES,
+        }));
+        setProducts(mappedProducts);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Failed to fetch products:", err);
+        setLoading(false);
+      });
+  }, []);
+
+  const handleCheckout = async (product) => {
+    try {
+      const payload = {
+        orderType: "Retail",
+        customer: "Guest User", // placeholder
+        shippingAddress: "To be added", // placeholder
+        itemsList: [
+          { 
+            name: product.name, 
+            qty: 1, 
+            price: product.price, 
+            image: product.image 
+          }
+        ]
+      };
+
+      const response = await fetch(`${API_URL}/orders`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        alert("Order placed successfully!");
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to place order: ${errorData.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error("Checkout error:", error);
+      alert("Error placing order.");
+    }
+  };
 
   // Filter Logic
   const filteredProducts = useMemo(() => {
-    return ALL_PRODUCTS.filter(product => {
+    return products.filter(product => {
       // Search Filter
       const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
       
@@ -65,15 +86,15 @@ export default function Shop() {
       
       // Size Filter
       const matchesSize = selectedSizes.length === 0 || 
-                          selectedSizes.some(size => product.sizes.includes(size));
+                          (product.sizes && selectedSizes.some(size => product.sizes.includes(size)));
                           
       // Print Size Filter
       const matchesPrintSize = selectedPrintSizes.length === 0 || 
-                               selectedPrintSizes.some(ps => product.printSizes.includes(ps));
+                               (product.printSizes && selectedPrintSizes.some(ps => product.printSizes.includes(ps)));
 
       return matchesSearch && matchesPrice && matchesSize && matchesPrintSize;
     });
-  }, [searchQuery, priceRange, selectedSizes, selectedPrintSizes]);
+  }, [products, searchQuery, priceRange, selectedSizes, selectedPrintSizes]);
 
   const toggleSize = (size) => {
     setSelectedSizes(prev => 
@@ -203,10 +224,14 @@ export default function Shop() {
 
           {/* Product Grid */}
           <div className="flex-1">
-            {filteredProducts.length > 0 ? (
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center text-gray-400">
+                Loading products...
+              </div>
+            ) : filteredProducts.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
                 {filteredProducts.map(product => (
-                  <ProductCard key={product.id} product={product} />
+                  <ProductCard key={product._id || product.id} product={product} onQuickAdd={handleCheckout} />
                 ))}
               </div>
             ) : (
