@@ -35,41 +35,44 @@ export default function Wholesale() {
           setSelectedItem(data.items[0]);
           setQuantity(data.items[0].moq || 15);
         }
+        if (data && data.wholesaleTemplates) {
+          const mappedTemplates = data.wholesaleTemplates
+            .filter(t => t.isActive && t.templateId)
+            .map(t => ({
+              ...t.templateId,
+              _id: t.templateId._id,
+              isRecommended: false
+            }));
+          setTemplates(mappedTemplates);
+        }
         setLoading(false);
       })
       .catch(err => {
         console.error("Failed to fetch live catalogue:", err);
-      });
-
-    fetch(`${API_URL}/templates`)
-      .then(res => res.json())
-      .then(data => {
-        setTemplates(data.filter(t => t.isActive));
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("Failed to fetch templates:", err);
         setLoading(false);
       });
   }, []);
 
   const printStyles = useMemo(() => {
-    if (!catalogue || !catalogue.printPricing) return [];
-    return catalogue.printPricing.map(p => {
-      // Map to category based on name keywords if possible
-      let cat = 'Other';
-      if (p.sizeName.toLowerCase().includes('front') || p.sizeName.toLowerCase().includes('chest')) cat = 'Front';
-      if (p.sizeName.toLowerCase().includes('back')) cat = 'Back';
-      if (p.sizeName.toLowerCase().includes('sleeve')) cat = 'Sleeve';
+    if (!catalogue || !catalogue.wholesaleLocations) return [];
+    return catalogue.wholesaleLocations
+      .filter(p => p.isActive && p.locationId)
+      .map(p => {
+        const name = p.locationId.name || 'Unknown';
+        // Map to category based on name keywords if possible
+        let cat = 'Other';
+        if (name.toLowerCase().includes('front') || name.toLowerCase().includes('chest')) cat = 'Front';
+        if (name.toLowerCase().includes('back')) cat = 'Back';
+        if (name.toLowerCase().includes('sleeve')) cat = 'Sleeve';
 
-      return {
-        name: p.sizeName,
-        cost: p.price,
-        category: cat,
-        size: p.dimensionsCm,
-        id: p._id
-      };
-    });
+        return {
+          name: name,
+          cost: p.wholesaleCost,
+          category: cat,
+          size: 'Custom',
+          id: p.locationId._id || p._id
+        };
+      });
   }, [catalogue]);
 
   // Pricing Logic

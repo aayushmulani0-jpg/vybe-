@@ -94,6 +94,7 @@ export default function CustomOrder() {
   }, [selectedPrints]);
 
   const togglePrint = (style) => {
+    setActiveCombo(null);
     setSelectedPrints(prev => {
       const isSelected = prev.find(p => p._id === style._id);
       if (isSelected) {
