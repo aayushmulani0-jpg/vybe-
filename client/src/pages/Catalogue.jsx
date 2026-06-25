@@ -9,6 +9,10 @@ export default function Catalogue() {
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [priceRange, setPriceRange] = useState([0, 5000]);
+  const [appliedFilters, setAppliedFilters] = useState({
+    searchQuery: '',
+    priceRange: [0, 5000]
+  });
 
   const [products, setProducts] = useState([]);
   const [catalogueName, setCatalogueName] = useState('');
@@ -46,15 +50,26 @@ export default function Catalogue() {
   // Filter Logic
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
-      const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
+      const matchesSearch = product.name.toLowerCase().includes(appliedFilters.searchQuery.toLowerCase());
+      const matchesPrice = product.price >= appliedFilters.priceRange[0] && (appliedFilters.priceRange[1] === 5000 ? true : product.price <= appliedFilters.priceRange[1]);
       return matchesSearch && matchesPrice;
     });
-  }, [products, searchQuery, priceRange]);
+  }, [products, appliedFilters]);
+
+  const applyFilters = () => {
+    setAppliedFilters({
+      searchQuery,
+      priceRange
+    });
+  };
 
   const clearFilters = () => {
     setSearchQuery('');
     setPriceRange([0, 5000]);
+    setAppliedFilters({
+      searchQuery: '',
+      priceRange: [0, 5000]
+    });
   };
 
   const FiltersContent = () => (
@@ -77,8 +92,8 @@ export default function Catalogue() {
       {/* Price Range */}
       <div>
         <div className="flex justify-between mb-4">
-          <h3 className="text-secondary font-heading font-semibold uppercase tracking-wider">Wholesale Price</h3>
-          <span className="text-accent text-sm">₹{priceRange[0]} - ₹{priceRange[1]}</span>
+          <h3 className="text-secondary font-heading font-semibold uppercase tracking-wider">Price Range</h3>
+          <span className="text-accent text-sm">₹{priceRange[0]} - {priceRange[1] === 5000 ? '₹5000+' : `₹${priceRange[1]}`}</span>
         </div>
         <input 
           type="range" 
@@ -91,6 +106,9 @@ export default function Catalogue() {
         />
       </div>
 
+      <Button variant="primary" size="sm" onClick={applyFilters} className="w-full mb-3">
+        Apply Filters
+      </Button>
       <Button variant="outline" size="sm" onClick={clearFilters} className="w-full">
         Clear All Filters
       </Button>

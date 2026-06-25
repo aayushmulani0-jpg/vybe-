@@ -16,12 +16,12 @@ export default function ProductCard({ product, isWholesale = false, onQuickAdd }
       transition={{ duration: 0.3 }}
     >
       {/* Image Container */}
-      <div className="relative aspect-[4/5] overflow-hidden bg-neutral-900 mb-4">
-        <Link to={isWholesale ? '/wholesale' : `/shop/${product._id}`}>
+      <div className="relative aspect-square overflow-hidden bg-neutral-900 mb-4 flex items-center justify-center p-2">
+        <Link to={isWholesale ? '/wholesale' : `/shop/${product._id}`} className="w-full h-full flex items-center justify-center">
           <motion.img 
             src={isHovered && product.hoverImage ? product.hoverImage : product.image}
             alt={product.name}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain drop-shadow-2xl"
             initial={{ scale: 1 }}
             animate={{ scale: isHovered ? 1.05 : 1 }}
             transition={{ duration: 0.5 }}
@@ -30,9 +30,9 @@ export default function ProductCard({ product, isWholesale = false, onQuickAdd }
 
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-col gap-2">
-          {product.discountBadge && !isWholesale && (
+          {(!isWholesale && product.comparePrice && product.comparePrice > product.price) && (
             <span className="bg-accent text-primary text-xs font-bold px-2 py-1 uppercase tracking-wider">
-              {product.discountBadge}
+              {Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100)}% OFF
             </span>
           )}
           {product.stockStatus !== 'In Stock' && !isWholesale && (
@@ -84,11 +84,40 @@ export default function ProductCard({ product, isWholesale = false, onQuickAdd }
             {isWholesale && (
               <span className="text-accent text-xs font-body border border-accent/20 px-1.5 py-0.5 rounded-sm bg-accent/5">Wholesale</span>
             )}
-            {!isWholesale && product.mrp && (
-              <span className="text-gray-500 font-body text-sm line-through">₹{product.mrp}</span>
+            {!isWholesale && product.comparePrice && product.comparePrice > product.price && (
+              <span className="text-gray-500 font-body text-sm line-through">₹{product.comparePrice}</span>
             )}
           </div>
-          <span className="text-xs text-gray-400 font-body">{product.colors} Colors</span>
+          <div className="flex flex-col items-end gap-1">
+            {product.colors && Array.isArray(product.colors) && product.colors.length > 0 ? (
+              <div className="flex gap-1 items-center">
+                {product.colors.map((color, index) => (
+                  <div 
+                    key={index} 
+                    className="w-4 h-4 border border-white/20 rounded-sm" 
+                    style={{ backgroundColor: color }}
+                    title={color}
+                  ></div>
+                ))}
+              </div>
+            ) : (
+              <span className="text-[10px] text-gray-400 font-body">1 Color</span>
+            )}
+
+            {product.sizes && Array.isArray(product.sizes) && product.sizes.length > 0 && (
+              <div className="flex gap-1 items-center">
+                {product.sizes.map((size, index) => (
+                  <span 
+                    key={index} 
+                    className="text-[9px] font-bold border border-white/20 px-1 rounded-sm text-gray-400 bg-white/5 flex items-center justify-center min-w-[16px] h-4"
+                    title={size}
+                  >
+                    {size}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </motion.div>

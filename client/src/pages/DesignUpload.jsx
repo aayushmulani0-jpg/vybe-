@@ -235,6 +235,8 @@ export default function DesignUpload() {
   const [isDragging, setIsDragging] = useState(false);
   const [designScales, setDesignScales] = useState({});
   const [currentView, setCurrentView] = useState('front');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const addToCart = useCartStore(state => state.addToCart);
 
   // Only show zones that match user's selected print styles
   const activeZones = selectedPrints
@@ -290,6 +292,7 @@ export default function DesignUpload() {
             size: file.size,
             type: file.type,
             preview: e.target.result,
+            rawFile: file,
           },
         }));
         setDesignScales(prev => ({
@@ -339,6 +342,50 @@ export default function DesignUpload() {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const handleSubmitOrder = async () => {
+    setIsSubmitting(true);
+    try {
+      const finalImages = {};
+      
+      // Upload each file to the backend
+      for (const [zone, fileData] of Object.entries(uploadedFiles)) {
+        if (fileData.rawFile) {
+          const formData = new FormData();
+          formData.append('image', fileData.rawFile);
+          
+          const res = await fetch(`${API_URL}/upload`, {
+            method: 'POST',
+            body: formData,
+          });
+          
+          if (!res.ok) throw new Error(`Failed to upload ${zone} design`);
+          const data = await res.json();
+          finalImages[zone] = data.url;
+        } else {
+          finalImages[zone] = fileData.preview;
+        }
+      }
+
+      addToCart({
+        id: selectedCategory.productId?._id || selectedCategory.productId || 'custom-' + Date.now(),
+        name: `Wholesale - ${selectedCategory.productId?.name || selectedCategory.name || 'Blank Item'}`,
+        price: pricingDetails.pricePerPiece,
+        quantity: pricingDetails.q,
+        selectedPrints,
+        uploadedImages: finalImages,
+        orderType: 'Wholesale'
+      });
+      
+      alert('Added designs to cart!');
+      navigate('/checkout');
+    } catch (err) {
+      console.error(err);
+      alert('Error uploading designs: ' + err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const totalUploaded = Object.keys(uploadedFiles).length;
@@ -860,11 +907,14 @@ export default function DesignUpload() {
                 variant="accent"
                 size="lg"
                 className="w-full mt-6"
-                disabled={totalUploaded < totalRequired}
+                onClick={handleSubmitOrder}
+                disabled={totalUploaded < totalRequired || isSubmitting}
               >
-                {totalUploaded < totalRequired
-                  ? `Upload ${totalRequired - totalUploaded} more design${totalRequired - totalUploaded > 1 ? 's' : ''}`
-                  : 'Submit Order'
+                {isSubmitting 
+                  ? 'Uploading Designs...' 
+                  : totalUploaded < totalRequired
+                    ? `Upload ${totalRequired - totalUploaded} more design${totalRequired - totalUploaded > 1 ? 's' : ''}`
+                    : 'Submit Order'
                 }
               </Button>
 

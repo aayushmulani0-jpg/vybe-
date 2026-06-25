@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { FiDownload, FiCheckCircle, FiZap, FiBookOpen } from 'react-icons/fi';
 import Button from '../components/ui/Button';
 import { API_URL } from '../config';
+import { useCartStore } from '../store/useCartStore';
 
 const PRINT_CATEGORIES = [
   { key: 'Front', label: 'Front Prints', icon: '👕' },
@@ -12,33 +13,17 @@ const PRINT_CATEGORIES = [
   { key: 'Other', label: 'Other Placements', icon: '✨' },
 ];
 
-const COMBO_PRESETS = [
-  {
-    name: 'Streetwear Combo',
-    tag: 'Recommended',
-    description: 'Chest Design + Large Back',
-    prints: ['Chest Design (15×7 cm)', 'Large Back Graphic (A3)'],
-  },
-  {
-    name: 'Minimal Combo',
-    tag: null,
-    description: 'Left Chest + Upper Back',
-    prints: ['Left Chest Logo', 'Small Upper Back Logo'],
-  },
-  {
-    name: 'Anime Collection',
-    tag: 'Popular',
-    description: 'A4 Front + A3 Back',
-    prints: ['Front Graphic (A4)', 'Large Back Graphic (A3)'],
-  },
-];
+
 
 export default function Wholesale() {
   const navigate = useNavigate();
+  const addToCart = useCartStore(state => state.addToCart);
   const [catalogue, setCatalogue] = useState(null);
   const [quantity, setQuantity] = useState(15);
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedPrints, setSelectedPrints] = useState([]);
+  const [activeCombo, setActiveCombo] = useState(null);
+  const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -54,6 +39,16 @@ export default function Wholesale() {
       })
       .catch(err => {
         console.error("Failed to fetch live catalogue:", err);
+      });
+
+    fetch(`${API_URL}/templates`)
+      .then(res => res.json())
+      .then(data => {
+        setTemplates(data.filter(t => t.isActive));
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Failed to fetch templates:", err);
         setLoading(false);
       });
   }, []);
@@ -66,7 +61,7 @@ export default function Wholesale() {
       if (p.sizeName.toLowerCase().includes('front') || p.sizeName.toLowerCase().includes('chest')) cat = 'Front';
       if (p.sizeName.toLowerCase().includes('back')) cat = 'Back';
       if (p.sizeName.toLowerCase().includes('sleeve')) cat = 'Sleeve';
-      
+
       return {
         name: p.sizeName,
         cost: p.price,
@@ -101,10 +96,11 @@ export default function Wholesale() {
   }, [quantity, selectedItem, selectedPrints]);
 
   const togglePrint = (style) => {
+    setActiveCombo(null); // Clear active combo when manually toggling
     setSelectedPrints(prev => {
-      const isSelected = prev.find(p => p.name === style.name);
+      const isSelected = prev.find(p => p.id === style.id);
       if (isSelected) {
-        return prev.filter(p => p.name !== style.name);
+        return prev.filter(p => p.id !== style.id);
       } else {
         return [...prev, style];
       }
@@ -112,56 +108,44 @@ export default function Wholesale() {
   };
 
   const applyCombo = (combo) => {
-    const prints = combo.prints
-      .map(name => printStyles.find(s => s.name === name))
+    if (activeCombo && activeCombo._id === combo._id) {
+      setSelectedPrints([]);
+      setActiveCombo(null);
+      return;
+    }
+    const prints = (combo.printAreas || [])
+      .map(area => printStyles.find(s => s.name === area.name))
       .filter(Boolean);
     setSelectedPrints(prints);
+    setActiveCombo(combo);
   };
 
   const handlePlaceWholesaleOrder = async () => {
     if (!selectedItem || !pricingDetails.isValid) return;
-    
-    try {
-      const payload = {
-        orderType: "Wholesale",
-        company: "Guest Company", // placeholder
-        contact: "guest@company.com", // placeholder
-        shippingAddress: "To be added", // placeholder
-        itemsList: [
-          { 
-            productId: selectedItem.productId._id || selectedItem.productId, 
-            name: selectedItem.productId.name || 'Blank Item', 
-            qty: pricingDetails.q, 
-            price: pricingDetails.pricePerPiece,
-            image: selectedItem.productId.image 
-          }
-        ]
-      };
 
-      const response = await fetch(`${API_URL}/orders`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+    addToCart({
+      _id: 'wholesale-' + Date.now(),
+      id: selectedItem.productId._id || selectedItem.productId,
+      productId: selectedItem.productId._id || selectedItem.productId,
+      name: selectedItem.productId.name || 'Blank Item',
+      price: pricingDetails.pricePerPiece,
+      image: selectedItem.productId.image,
+      quantity: pricingDetails.q,
+      selectedPrints: selectedPrints.map(p => ({ name: p.name, cost: p.cost })),
+      orderType: 'Wholesale'
+    });
 
-      if (response.ok) {
-        alert("Wholesale order placed successfully!");
-      } else {
-        const errorData = await response.json();
-        alert(`Failed to place wholesale order: ${errorData.message || 'Unknown error'}`);
-      }
-    } catch (error) {
-      console.error("Checkout error:", error);
-      alert("Error placing wholesale order.");
-    }
+    alert("Added wholesale blanks to cart!");
   };
 
   if (loading) {
     return <div className="min-h-screen pt-24 flex items-center justify-center text-gray-400">Loading wholesale catalogue...</div>;
   }
 
-  if (!catalogue) {
-    return <div className="min-h-screen pt-24 flex items-center justify-center text-gray-400">No live catalogue available right now.</div>;
+  if (!catalogue || !catalogue.items) {
+    return <div className="min-h-screen pt-24 flex flex-col gap-4 items-center justify-center text-gray-400">
+      <p>No live catalogue available right now.</p>
+    </div>;
   }
 
   return (
@@ -231,16 +215,23 @@ export default function Wholesale() {
               <div className="mb-6">
                 <p className="text-gray-500 text-xs font-body uppercase tracking-wider mb-3">Quick Combos</p>
                 <div className="flex flex-wrap gap-2">
-                  {COMBO_PRESETS.map(combo => (
+                  {templates.map(combo => (
                     <button
-                      key={combo.name}
+                      key={combo._id}
                       onClick={() => applyCombo(combo)}
-                      className="flex items-center gap-2 px-3 py-2 border border-white/10 rounded-sm text-sm font-body text-gray-300 hover:border-accent hover:text-accent transition-colors group"
+                      className={`flex items-center gap-2 px-3 py-2 border rounded-sm text-sm font-body transition-colors group ${
+                          activeCombo && activeCombo._id === combo._id
+                            ? 'border-accent bg-accent/10 text-accent'
+                            : 'border-white/10 text-gray-300 hover:border-accent hover:text-accent'
+                        }`}
                     >
                       <FiZap className="w-3 h-3 text-accent/60 group-hover:text-accent" />
                       <span>{combo.name}</span>
-                      {combo.tag && (
-                        <span className="text-[10px] px-1.5 py-0.5 bg-accent/15 text-accent rounded-sm">{combo.tag}</span>
+                      {combo.isRecommended && (
+                        <span className="text-[10px] px-1.5 py-0.5 bg-accent/15 text-accent rounded-sm">Recommended</span>
+                      )}
+                      {combo.isPopular && (
+                        <span className="text-[10px] px-1.5 py-0.5 bg-accent/15 text-accent rounded-sm">Popular</span>
                       )}
                     </button>
                   ))}
@@ -259,15 +250,14 @@ export default function Wholesale() {
                       </p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {styles.map(style => {
-                          const isSelected = !!selectedPrints.find(p => p.name === style.name);
+                          const isSelected = !!selectedPrints.find(p => p.id === style.id);
                           return (
                             <label
                               key={style.name}
-                              className={`flex items-center p-3 border rounded-sm cursor-pointer transition-all ${
-                                isSelected
+                              className={`flex items-center p-3 border rounded-sm cursor-pointer transition-all ${isSelected
                                   ? 'border-accent/50 bg-accent/5'
                                   : 'border-white/10 hover:border-accent/30'
-                              }`}
+                                }`}
                             >
                               <input
                                 type="checkbox"
@@ -374,7 +364,7 @@ export default function Wholesale() {
                   disabled={!pricingDetails.isValid}
                   onClick={handlePlaceWholesaleOrder}
                 >
-                  Place Wholesale Order (Blanks)
+                  Add Wholesale Blanks to Cart
                 </Button>
               )}
             </div>

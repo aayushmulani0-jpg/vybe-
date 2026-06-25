@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiFilter, FiX, FiSearch } from 'react-icons/fi';
 import ProductCard from '../components/ui/ProductCard';
+import QuickViewModal from '../components/ui/QuickViewModal';
 import Button from '../components/ui/Button';
 import { API_URL } from '../config';
 
@@ -15,8 +16,19 @@ export default function Shop() {
   const [selectedSizes, setSelectedSizes] = useState([]);
   const [selectedPrintSizes, setSelectedPrintSizes] = useState([]);
   
+  const [appliedFilters, setAppliedFilters] = useState({
+    searchQuery: '',
+    priceRange: [0, 2000],
+    selectedSizes: [],
+    selectedPrintSizes: []
+  });
+  
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Quick View State
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
 
   useEffect(() => {
     fetch(`${API_URL}/products`)
@@ -39,62 +51,32 @@ export default function Shop() {
       });
   }, []);
 
-  const handleCheckout = async (product) => {
-    try {
-      const payload = {
-        orderType: "Retail",
-        customer: "Guest User", // placeholder
-        shippingAddress: "To be added", // placeholder
-        itemsList: [
-          { 
-            name: product.name, 
-            qty: 1, 
-            price: product.price, 
-            image: product.image 
-          }
-        ]
-      };
-
-      const response = await fetch(`${API_URL}/orders`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if (response.ok) {
-        alert("Order placed successfully!");
-      } else {
-        const errorData = await response.json();
-        alert(`Failed to place order: ${errorData.message || 'Unknown error'}`);
-      }
-    } catch (error) {
-      console.error("Checkout error:", error);
-      alert("Error placing order.");
-    }
+  const handleOpenQuickView = (product) => {
+    setSelectedProduct(product);
+    setIsQuickViewOpen(true);
   };
+
 
   // Filter Logic
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
       // Search Filter
-      const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch = product.name.toLowerCase().includes(appliedFilters.searchQuery.toLowerCase());
       
       // Price Filter
-      const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
+      const matchesPrice = product.price >= appliedFilters.priceRange[0] && (appliedFilters.priceRange[1] === 2000 ? true : product.price <= appliedFilters.priceRange[1]);
       
       // Size Filter
-      const matchesSize = selectedSizes.length === 0 || 
-                          (product.sizes && selectedSizes.some(size => product.sizes.includes(size)));
+      const matchesSize = appliedFilters.selectedSizes.length === 0 || 
+                          (product.sizes && appliedFilters.selectedSizes.some(size => product.sizes.includes(size)));
                           
       // Print Size Filter
-      const matchesPrintSize = selectedPrintSizes.length === 0 || 
-                               (product.printSizes && selectedPrintSizes.some(ps => product.printSizes.includes(ps)));
+      const matchesPrintSize = appliedFilters.selectedPrintSizes.length === 0 || 
+                               (product.printSizes && appliedFilters.selectedPrintSizes.some(ps => product.printSizes.includes(ps)));
 
       return matchesSearch && matchesPrice && matchesSize && matchesPrintSize;
     });
-  }, [products, searchQuery, priceRange, selectedSizes, selectedPrintSizes]);
+  }, [products, appliedFilters]);
 
   const toggleSize = (size) => {
     setSelectedSizes(prev => 
@@ -108,11 +90,26 @@ export default function Shop() {
     );
   };
 
+  const applyFilters = () => {
+    setAppliedFilters({
+      searchQuery,
+      priceRange,
+      selectedSizes,
+      selectedPrintSizes
+    });
+  };
+
   const clearFilters = () => {
     setSearchQuery('');
     setPriceRange([0, 2000]);
     setSelectedSizes([]);
     setSelectedPrintSizes([]);
+    setAppliedFilters({
+      searchQuery: '',
+      priceRange: [0, 2000],
+      selectedSizes: [],
+      selectedPrintSizes: []
+    });
   };
 
   const FiltersContent = () => (
@@ -136,7 +133,7 @@ export default function Shop() {
       <div>
         <div className="flex justify-between mb-4">
           <h3 className="text-secondary font-heading font-semibold uppercase tracking-wider">Price Range</h3>
-          <span className="text-accent text-sm">₹{priceRange[0]} - ₹{priceRange[1]}</span>
+          <span className="text-accent text-sm">₹{priceRange[0]} - {priceRange[1] === 2000 ? '₹2000+' : `₹${priceRange[1]}`}</span>
         </div>
         <input 
           type="range" 
@@ -189,6 +186,9 @@ export default function Shop() {
         </div>
       </div>
 
+      <Button variant="primary" size="sm" onClick={applyFilters} className="w-full mb-3">
+        Apply Filters
+      </Button>
       <Button variant="outline" size="sm" onClick={clearFilters} className="w-full">
         Clear All Filters
       </Button>
@@ -231,7 +231,7 @@ export default function Shop() {
             ) : filteredProducts.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
                 {filteredProducts.map(product => (
-                  <ProductCard key={product._id || product.id} product={product} onQuickAdd={handleCheckout} />
+                  <ProductCard key={product._id || product.id} product={product} onQuickAdd={handleOpenQuickView} />
                 ))}
               </div>
             ) : (
@@ -274,6 +274,12 @@ export default function Shop() {
           </>
         )}
       </AnimatePresence>
+
+      <QuickViewModal 
+        product={selectedProduct}
+        isOpen={isQuickViewOpen}
+        onClose={() => setIsQuickViewOpen(false)}
+      />
     </div>
   );
 }

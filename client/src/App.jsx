@@ -9,6 +9,10 @@ import CustomOrder from './pages/CustomOrder';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import Catalogue from './pages/Catalogue';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Checkout from './pages/Checkout';
+import Profile from './pages/Profile';
 
 function App() {
   return (
@@ -20,9 +24,14 @@ function App() {
         <Route path="wholesale" element={<Wholesale />} />
         <Route path="wholesale/upload" element={<DesignUpload />} />
         <Route path="custom" element={<CustomOrder />} />
+        <Route path="custom-print" element={<CustomOrder />} />
         <Route path="catalogue" element={<Catalogue />} />
         <Route path="about" element={<About />} />
         <Route path="contact" element={<Contact />} />
+        <Route path="login" element={<Login />} />
+        <Route path="register" element={<Register />} />
+        <Route path="checkout" element={<Checkout />} />
+        <Route path="profile" element={<Profile />} />
       </Route>
     </Routes>
   );
