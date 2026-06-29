@@ -61,6 +61,7 @@ export default function CustomOrder() {
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [zipCode, setZipCode] = useState('');
+  const [customPrintNotice, setCustomPrintNotice] = useState('');
 
   const addToCart = useCartStore(state => state.addToCart);
   const fileInputRef = useRef(null);
@@ -92,10 +93,15 @@ export default function CustomOrder() {
     fetch(`${API_URL}/settings`)
       .then(res => res.json())
       .then(data => {
-        if (data.success && data.settings && data.settings.customPrintColors && data.settings.customPrintColors.length > 0) {
-          const activeColors = data.settings.customPrintColors.filter(c => c.isActive);
-          setColors(activeColors);
-          if (activeColors.length > 0) setSelectedColor(activeColors[0]);
+        if (data.success && data.settings) {
+          if (data.settings.customPrintColors && data.settings.customPrintColors.length > 0) {
+            const activeColors = data.settings.customPrintColors.filter(c => c.isActive);
+            setColors(activeColors);
+            if (activeColors.length > 0) setSelectedColor(activeColors[0]);
+          }
+          if (data.settings.general && data.settings.general.customPrintNotice) {
+            setCustomPrintNotice(data.settings.general.customPrintNotice);
+          }
         }
       })
       .catch(err => console.error("Failed to fetch settings:", err));
@@ -322,7 +328,7 @@ export default function CustomOrder() {
       ) : (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-          <div className="mb-12">
+          <div className="mb-8">
             <h1 className="text-4xl md:text-6xl font-heading font-bold text-secondary uppercase tracking-tighter mb-4">
               Upload <span className="text-accent italic">Design</span>
             </h1>
@@ -472,6 +478,12 @@ export default function CustomOrder() {
                       ))}
                     </div>
                   </>
+                )}
+                
+                {customPrintNotice && (
+                  <div className="mt-6 bg-accent/10 border border-accent/20 p-4 rounded-lg">
+                    <p className="text-accent text-sm font-medium">{customPrintNotice}</p>
+                  </div>
                 )}
               </div>
 
