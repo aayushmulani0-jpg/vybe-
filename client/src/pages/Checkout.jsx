@@ -5,12 +5,14 @@ import { useAuthStore } from '../store/useAuthStore';
 import { useCartStore } from '../store/useCartStore';
 import { API_URL } from '../config';
 import Button from '../components/ui/Button';
+import { useUIStore } from '../store/useUIStore';
 
 export default function Checkout() {
   const user = useAuthStore(state => state.user);
   const token = useAuthStore(state => state.token);
   const { items, getCartTotal, clearCart } = useCartStore();
   const navigate = useNavigate();
+  const { alert } = useUIStore();
 
   // Redirect if not logged in
   if (!user || !token) {
@@ -90,7 +92,7 @@ export default function Checkout() {
 
   const handlePlaceOrder = async () => {
     if (!selectedAddressId) {
-      alert("Please select a shipping address.");
+      alert("Please select a shipping address.", "error", "Missing Address");
       return;
     }
     setIsPlacingOrder(true);
@@ -193,7 +195,7 @@ export default function Checkout() {
       const allOk = results.every(r => r.ok);
       
       if (allOk) {
-        alert("Order Placed Successfully!");
+        alert("Order Placed Successfully!", "success", "Success");
         clearCart();
         navigate('/');
       } else {
@@ -204,7 +206,7 @@ export default function Checkout() {
       }
     } catch (err) {
       console.error(err);
-      alert("Error placing order: " + (err.message || 'Unknown error'));
+      alert("Error placing order: " + (err.message || 'Unknown error'), "error", "Error");
     } finally {
       setIsPlacingOrder(false);
     }

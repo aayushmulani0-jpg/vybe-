@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { FiUploadCloud, FiTrash2, FiCheck, FiArrowLeft, FiShoppingBag, FiImage } from 'react-icons/fi';
 import Button from '../components/ui/Button';
 import { useCartStore } from '../store/useCartStore';
+import { useUIStore } from '../store/useUIStore';
 import { API_URL } from '../config';
 
 // Mock T-Shirt Image URL (Plain Black)
@@ -22,6 +23,7 @@ export default function DesignUpload() {
   const location = useLocation();
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+  const { alert } = useUIStore();
 
   // Wholesale State
   const { selectedPrints = [], pricingDetails = {}, selectedCategory = {} } = location.state || {};
@@ -91,7 +93,7 @@ export default function DesignUpload() {
 
   const handleSubmitOrder = async () => {
     if (Object.keys(uploadedImages).length === 0) {
-      alert('Please upload a design for at least one print area before adding to cart.');
+      alert('Please upload a design for at least one print area before adding to cart.', 'error', 'Missing Design');
       return;
     }
 
@@ -119,11 +121,11 @@ export default function DesignUpload() {
         orderType: 'Wholesale'
       });
       
-      alert('Added wholesale designs to cart!');
+      alert('Added wholesale designs to cart!', 'success', 'Success');
       navigate('/checkout');
     } catch (err) {
       console.error(err);
-      alert('Error uploading designs: ' + err.message);
+      alert('Error uploading designs: ' + err.message, 'error', 'Upload Error');
     } finally {
       setIsUploading(false);
     }

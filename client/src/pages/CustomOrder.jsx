@@ -6,6 +6,7 @@ import Button from '../components/ui/Button';
 import { API_URL } from '../config';
 import { useCartStore } from '../store/useCartStore';
 import { useApiStore } from '../store/useApiStore';
+import { useUIStore } from '../store/useUIStore';
 
 // Mock T-Shirt Image URL (Plain Black)
 const TSHIRT_MOCKUP = "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&q=80&w=800"; // Black oversized blank
@@ -30,6 +31,7 @@ const CATEGORIES = [
 export default function CustomOrder() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { alert } = useUIStore();
 
   const passedState = location.state || {};
 
@@ -157,11 +159,11 @@ export default function CustomOrder() {
 
   const handleAddToCartOnly = async () => {
     if (Object.keys(uploadedImages).length === 0) {
-      alert('Please upload a design for at least one print area before adding to cart.');
+      alert('Please upload a design for at least one print area before adding to cart.', 'error', 'Missing Design');
       return;
     }
     if (!pricingDetails.isValid) {
-      alert(`Please select a valid quantity (MOQ required).`);
+      alert(`Please select a valid quantity (MOQ required).`, 'error', 'Invalid Quantity');
       return;
     }
 
@@ -189,9 +191,9 @@ export default function CustomOrder() {
         uploadedImages: finalImages,
         orderType: 'CustomPrint'
       });
-      alert('Added custom design to cart!');
+      alert('Added custom design to cart!', 'success', 'Success');
     } catch (err) {
-      alert('Error: ' + err.message);
+      alert('Error: ' + err.message, 'error', 'Error');
     } finally {
       setIsUploading(false);
     }
@@ -199,7 +201,7 @@ export default function CustomOrder() {
 
   const handleCheckout = async () => {
     if (!customerName.trim() || !customerEmail.trim() || !customerPhone.trim() || !shippingAddress.trim() || !city.trim() || !state.trim() || !zipCode.trim()) {
-      alert('Please fill out all contact and shipping details before checkout.');
+      alert('Please fill out all contact and shipping details before checkout.', 'error', 'Missing Fields');
       return;
     }
 
@@ -232,10 +234,10 @@ export default function CustomOrder() {
           }
         ]
       });
-      alert('Order placed successfully!');
+      alert('Order placed successfully!', 'success', 'Success');
       navigate('/shop');
     } catch (err) {
-      alert(err.message || 'Failed to place order');
+      alert(err.message || 'Failed to place order', 'error', 'Error');
     } finally {
       setIsUploading(false);
     }

@@ -78,8 +78,8 @@ export default function Catalogue() {
       <div>
         <h3 className="text-secondary font-heading font-semibold uppercase tracking-wider mb-4">Search</h3>
         <div className="relative">
-          <input 
-            type="text" 
+          <input
+            type="text"
             placeholder="Search products..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -95,10 +95,10 @@ export default function Catalogue() {
           <h3 className="text-secondary font-heading font-semibold uppercase tracking-wider">Price Range</h3>
           <span className="text-accent text-sm">₹{priceRange[0]} - {priceRange[1] === 5000 ? '₹5000+' : `₹${priceRange[1]}`}</span>
         </div>
-        <input 
-          type="range" 
-          min="0" 
-          max="5000" 
+        <input
+          type="range"
+          min="0"
+          max="5000"
           step="50"
           value={priceRange[1]}
           onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
@@ -118,7 +118,7 @@ export default function Catalogue() {
   return (
     <div className="min-h-screen pt-24 pb-20 bg-primary">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-end mb-12 border-b border-white/10 pb-8">
           <div>
@@ -130,8 +130,8 @@ export default function Catalogue() {
               Showing {filteredProducts.length} results
             </p>
           </div>
-          
-          <button 
+
+          <button
             className="md:hidden mt-6 flex items-center gap-2 text-secondary hover:text-accent"
             onClick={() => setIsMobileFiltersOpen(true)}
           >
@@ -172,14 +172,14 @@ export default function Catalogue() {
       <AnimatePresence>
         {isMobileFiltersOpen && (
           <>
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsMobileFiltersOpen(false)}
               className="fixed inset-0 bg-black/80 z-[60] md:hidden"
             />
-            <motion.div 
+            <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}

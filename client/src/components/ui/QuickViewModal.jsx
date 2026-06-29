@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from './Button';
 import { useCartStore } from '../../store/useCartStore';
+import { useUIStore } from '../../store/useUIStore';
 
 export default function QuickViewModal({ product, isOpen, onClose, onAddToCart }) {
   const navigate = useNavigate();
@@ -12,16 +13,17 @@ export default function QuickViewModal({ product, isOpen, onClose, onAddToCart }
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(product?.image);
   const addToCart = useCartStore(state => state.addToCart);
+  const { alert } = useUIStore();
 
   if (!product) return null;
 
   const handleAddToCartOnly = () => {
     if (product.colors?.length > 0 && !selectedColor) {
-      alert('Please select a color');
+      alert('Please select a color', 'error', 'Color Required');
       return;
     }
     addToCart({ ...product, selectedSize, selectedColor, quantity });
-    alert('Added to cart!');
+    alert('Added to cart!', 'success', 'Added');
     onClose();
   };
 
@@ -29,16 +31,16 @@ export default function QuickViewModal({ product, isOpen, onClose, onAddToCart }
 
   const handleAddToCart = () => {
     if (product.sizes?.length > 0 && !selectedSize) {
-      alert('Please select a size');
+      alert('Please select a size', 'error', 'Size Required');
       return;
     }
     if (product.colors?.length > 0 && !selectedColor) {
-      alert('Please select a color');
+      alert('Please select a color', 'error', 'Color Required');
       return;
     }
     
     addToCart({ ...product, selectedSize, selectedColor, quantity, orderType: 'Retail' });
-    alert('Added to cart!');
+    alert('Added to cart!', 'success', 'Added');
     onClose();
   };
 

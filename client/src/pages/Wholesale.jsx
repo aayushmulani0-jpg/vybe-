@@ -5,6 +5,7 @@ import { FiDownload, FiCheckCircle, FiZap, FiBookOpen } from 'react-icons/fi';
 import Button from '../components/ui/Button';
 import { API_URL } from '../config';
 import { useCartStore } from '../store/useCartStore';
+import { useUIStore } from '../store/useUIStore';
 
 const PRINT_CATEGORIES = [
   { key: 'Front', label: 'Front Prints', icon: '👕' },
@@ -18,6 +19,7 @@ const PRINT_CATEGORIES = [
 export default function Wholesale() {
   const navigate = useNavigate();
   const addToCart = useCartStore(state => state.addToCart);
+  const { alert } = useUIStore();
   const [catalogue, setCatalogue] = useState(null);
   const [quantity, setQuantity] = useState(15);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -138,7 +140,7 @@ export default function Wholesale() {
       orderType: 'Wholesale'
     });
 
-    alert("Added wholesale blanks to cart!");
+    alert("Added wholesale blanks to cart!", 'success', 'Success');
   };
 
   if (loading) {
