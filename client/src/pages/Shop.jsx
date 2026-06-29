@@ -30,6 +30,7 @@ export default function Shop() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [collectionName, setCollectionName] = useState('');
+  const [collectionType, setCollectionType] = useState('');
 
   // Quick View State
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -50,6 +51,7 @@ export default function Shop() {
             }));
             setProducts(mappedProducts);
             setCollectionName(data.collection.name);
+            setCollectionType(data.collection.type);
           } else {
             setProducts([]);
           }
@@ -61,6 +63,7 @@ export default function Shop() {
         });
     } else {
       setCollectionName('');
+      setCollectionType('');
       fetch(`${API_URL}/products`)
         .then(res => res.json())
         .then(data => {
@@ -233,7 +236,7 @@ export default function Shop() {
             {collectionName ? (
               <div className="mb-2">
                 <span className="inline-block px-3 py-1 bg-accent/20 text-accent border border-accent/50 text-xs font-bold uppercase tracking-wider rounded-full shadow-[0_0_10px_rgba(163,255,18,0.2)] mb-4">
-                  Collection View
+                  {collectionType || 'Collection View'}
                 </span>
                 <h1 className="text-5xl md:text-7xl font-heading font-bold text-secondary uppercase tracking-tighter">
                   {collectionName}

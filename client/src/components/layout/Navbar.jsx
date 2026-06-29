@@ -1,19 +1,37 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FiShoppingBag, FiSearch, FiHeart, FiUser } from 'react-icons/fi';
 import { useCartStore } from '../../store/useCartStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import CartDrawer from '../ui/CartDrawer';
+import { API_URL } from '../../config';
 
 export default function Navbar() {
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [announcement, setAnnouncement] = useState('');
   const getCartCount = useCartStore(state => state.getCartCount);
   const user = useAuthStore(state => state.user);
   const cartCount = getCartCount();
 
+  useEffect(() => {
+    fetch(`${API_URL}/settings`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.settings && data.settings.general && data.settings.general.announcement) {
+          setAnnouncement(data.settings.general.announcement);
+        }
+      })
+      .catch(err => console.error("Failed to fetch settings for announcement:", err));
+  }, []);
+
   return (
     <>
-      <header className="fixed top-0 left-0 w-full z-50 bg-primary/80 backdrop-blur-md border-b border-white/10">
+      {announcement && (
+        <div className="bg-accent text-primary text-center py-2 px-4 text-xs font-bold uppercase tracking-widest fixed top-0 left-0 w-full z-[60]">
+          {announcement}
+        </div>
+      )}
+      <header className={`fixed left-0 w-full z-50 bg-primary/80 backdrop-blur-md border-b border-white/10 transition-all ${announcement ? 'top-[32px]' : 'top-0'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             {/* Logo */}

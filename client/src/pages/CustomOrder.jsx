@@ -39,6 +39,8 @@ export default function CustomOrder() {
   const [selectedCategory, setSelectedCategory] = useState(passedState.selectedCategory || CATEGORIES[0]);
   const [selectedSize, setSelectedSize] = useState('L');
   const [selectedPrints, setSelectedPrints] = useState(passedState.selectedPrints || []);
+  const [selectedColor, setSelectedColor] = useState(null); // Will hold the color object
+  const [printingInstructions, setPrintingInstructions] = useState('');
 
   const [uploadedImages, setUploadedImages] = useState({});
   const [uploadedRawFiles, setUploadedRawFiles] = useState({});
@@ -49,6 +51,7 @@ export default function CustomOrder() {
 
   const [printStyles, setPrintStyles] = useState([]);
   const [templates, setTemplates] = useState([]);
+  const [colors, setColors] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [customerName, setCustomerName] = useState('');
@@ -85,6 +88,17 @@ export default function CustomOrder() {
         setTemplates(data.filter(t => t.isActive));
       })
       .catch(err => console.error("Failed to fetch templates:", err));
+
+    fetch(`${API_URL}/settings`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.settings && data.settings.customPrintColors && data.settings.customPrintColors.length > 0) {
+          const activeColors = data.settings.customPrintColors.filter(c => c.isActive);
+          setColors(activeColors);
+          if (activeColors.length > 0) setSelectedColor(activeColors[0]);
+        }
+      })
+      .catch(err => console.error("Failed to fetch settings:", err));
   }, []);
 
   useEffect(() => {
@@ -187,6 +201,9 @@ export default function CustomOrder() {
         price: pricingDetails.pricePerPiece,
         quantity: pricingDetails.q,
         selectedSize: selectedSize,
+        selectedColor: selectedColor ? selectedColor.name : 'Black',
+        selectedColorHex: selectedColor ? selectedColor.hex : '#000000',
+        printingInstructions: printingInstructions,
         selectedPrints: selectedPrints,
         uploadedImages: finalImages,
         orderType: 'CustomPrint'
@@ -230,6 +247,10 @@ export default function CustomOrder() {
             name: `Custom Print - ${selectedCategory.name}`,
             qty: quantity,
             price: pricingDetails.pricePerPiece,
+            selectedSize: selectedSize,
+            selectedColor: selectedColor ? selectedColor.name : 'Black',
+            selectedColorHex: selectedColor ? selectedColor.hex : '#000000',
+            printingInstructions: printingInstructions,
             image: Object.values(finalImages)[0] || TSHIRT_MOCKUP
           }
         ]
@@ -527,6 +548,25 @@ export default function CustomOrder() {
                     ))}
                   </div>
 
+                  {colors.length > 0 && (
+                    <>
+                      <h3 className="text-secondary font-heading uppercase tracking-wider mb-4">
+                        Garment Color
+                      </h3>
+                      <div className="flex flex-wrap gap-3 mb-6">
+                        {colors.map(color => (
+                          <button
+                            key={color.name}
+                            onClick={() => setSelectedColor(color)}
+                            title={color.name}
+                            className={`w-10 h-10 rounded-full border-2 transition-all shadow-lg ${selectedColor?.name === color.name ? 'border-accent scale-110' : 'border-white/20 hover:border-white/50'}`}
+                            style={{ backgroundColor: color.hex }}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  )}
+
                   <h3 className="text-secondary font-heading uppercase tracking-wider mb-4">
                     Quantity
                   </h3>
@@ -550,6 +590,23 @@ export default function CustomOrder() {
                       <FiPlus />
                     </button>
                   </div>
+                </div>
+
+                <div className="mb-6">
+                  <div className="bg-accent/10 border border-accent/20 p-4 rounded-lg mb-4">
+                    <p className="text-accent text-sm font-medium">Note: We will be using plain t-shirts and print your reference design.</p>
+                  </div>
+                  
+                  <h3 className="text-secondary font-heading uppercase tracking-wider mb-4">
+                    Printing Instructions
+                  </h3>
+                  <textarea
+                    value={printingInstructions}
+                    onChange={(e) => setPrintingInstructions(e.target.value)}
+                    placeholder="Enter any specific instructions for the printing team (e.g. 'Make the logo 5cm wide', 'Remove the background color', etc.)"
+                    className="w-full bg-neutral-950 border border-white/20 rounded-md p-3 text-white focus:outline-none focus:border-accent text-sm resize-none"
+                    rows={3}
+                  />
                 </div>
 
                 <h3 className="text-secondary font-heading uppercase tracking-wider mb-4 border-b border-white/10 pb-4">

@@ -181,7 +181,9 @@ export default function Checkout() {
                 uploadedImages: item.uploadedImages || null,
                 selectedPrints: item.selectedPrints || [],
                 selectedSize: item.selectedSize,
-                selectedColor: item.selectedColor
+                selectedColor: item.selectedColor,
+                selectedColorHex: item.selectedColorHex,
+                printingInstructions: item.printingInstructions
               }))
             })
           })
