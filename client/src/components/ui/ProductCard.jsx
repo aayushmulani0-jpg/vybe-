@@ -28,7 +28,10 @@ export default function ProductCard({ product, isWholesale = false, onQuickAdd, 
     >
       {/* Image Container */}
       <div className="relative aspect-square overflow-hidden bg-neutral-900 mb-4 flex items-center justify-center p-2">
-        <Link to={isWholesale ? '/wholesale' : `/shop/${product._id}`} className="w-full h-full flex items-center justify-center">
+        <button 
+          onClick={handleQuickAdd}
+          className="w-full h-full flex items-center justify-center"
+        >
           <motion.img 
             src={isHovered && product.hoverImage ? product.hoverImage : product.image}
             alt={product.name}
@@ -37,7 +40,7 @@ export default function ProductCard({ product, isWholesale = false, onQuickAdd, 
             animate={{ scale: isHovered ? 1.05 : 1 }}
             transition={{ duration: 0.5 }}
           />
-        </Link>
+        </button>
 
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-col gap-2">
@@ -87,11 +90,13 @@ export default function ProductCard({ product, isWholesale = false, onQuickAdd, 
         </motion.div>
       </div>
 
-      {/* Product Details */}
       <div className="flex flex-col">
-        <Link to={isWholesale ? '/wholesale' : `/shop/${product._id || product.id}`} className="font-heading font-semibold text-lg text-secondary uppercase tracking-wider hover:text-accent transition-colors">
+        <button 
+          onClick={handleQuickAdd} 
+          className="font-heading font-semibold text-lg text-secondary uppercase tracking-wider hover:text-accent transition-colors text-left"
+        >
           {product.name}
-        </Link>
+        </button>
         <div className="flex justify-between items-center mt-1">
           <div className="flex items-center gap-2">
             <span className="text-secondary font-body font-medium">

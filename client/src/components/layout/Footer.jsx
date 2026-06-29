@@ -42,7 +42,7 @@ export default function Footer() {
             <ul className="space-y-3 text-sm">
               <li><Link to="/wholesale" className="text-gray-400 hover:text-accent transition-colors">Wholesale Pricing</Link></li>
               <li><Link to="/custom" className="text-gray-400 hover:text-accent transition-colors">Custom Printing</Link></li>
-              <li><Link to="/contact" className="text-gray-400 hover:text-accent transition-colors">Bulk Orders</Link></li>
+              <li><a href="#" className="text-gray-400 hover:text-accent transition-colors">Bulk Orders</a></li>
             </ul>
           </div>
 
@@ -50,7 +50,7 @@ export default function Footer() {
           <div>
             <h4 className="text-secondary font-heading font-semibold uppercase tracking-wider mb-4">Support</h4>
             <ul className="space-y-3 text-sm">
-              <li><Link to="/contact" className="text-gray-400 hover:text-accent transition-colors">Contact Us</Link></li>
+              <li><a href="#" className="text-gray-400 hover:text-accent transition-colors">Contact Us</a></li>
               <li><Link to="/about" className="text-gray-400 hover:text-accent transition-colors">About Us</Link></li>
               <li><a href="#" className="text-gray-400 hover:text-accent transition-colors">Shipping & Returns</a></li>
               <li><a href="#" className="text-gray-400 hover:text-accent transition-colors">Size Guide</a></li>

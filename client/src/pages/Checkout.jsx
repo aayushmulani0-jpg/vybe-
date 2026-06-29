@@ -24,7 +24,7 @@ export default function Checkout() {
   const [newAddress, setNewAddress] = useState({ street: '', city: '', state: '', zipCode: '' });
   const [showNewAddress, setShowNewAddress] = useState(false);
   
-  const [globalPricing, setGlobalPricing] = useState({ handling: 0, shipping: 0, fee: 0 });
+  const [pricingRules, setPricingRules] = useState([]);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
   useEffect(() => {
@@ -56,10 +56,7 @@ export default function Checkout() {
       const res = await fetch(`${API_URL}/pricing`);
       if (res.ok) {
         const data = await res.json();
-        const handling = data.find(p => p.name === 'Handling Charge')?.value || 0;
-        const shipping = data.find(p => p.name === 'Shipping Charge')?.value || 0;
-        const fee = data.find(p => p.name === 'Additional Fee')?.value || 0;
-        setGlobalPricing({ handling, shipping, fee });
+        setPricingRules(data);
       }
     } catch (err) {
       console.error(err);
@@ -226,7 +223,22 @@ export default function Checkout() {
   }
 
   const subtotal = getCartTotal();
-  const total = subtotal + globalPricing.handling + globalPricing.shipping + globalPricing.fee;
+  let total = subtotal;
+  
+  const applicableRules = pricingRules.filter(rule => !rule.minSubtotal || subtotal >= rule.minSubtotal);
+
+  applicableRules.forEach(rule => {
+    let computedValue = rule.value;
+    if (rule.type === 'percentage') {
+      computedValue = (subtotal * rule.value) / 100;
+    }
+
+    if (rule.action === 'subtract') {
+      total -= computedValue;
+    } else {
+      total += computedValue;
+    }
+  });
 
   return (
     <div className="min-h-screen pt-32 pb-12 px-4 sm:px-6 bg-primary">
@@ -328,24 +340,19 @@ export default function Checkout() {
                 <span>Subtotal</span>
                 <span>₹{subtotal.toLocaleString()}</span>
               </div>
-              {globalPricing.shipping > 0 && (
-                <div className="flex justify-between text-gray-400">
-                  <span>Shipping Charge</span>
-                  <span>+₹{globalPricing.shipping.toLocaleString()}</span>
-                </div>
-              )}
-              {globalPricing.handling > 0 && (
-                <div className="flex justify-between text-gray-400">
-                  <span>Handling Charge</span>
-                  <span>+₹{globalPricing.handling.toLocaleString()}</span>
-                </div>
-              )}
-              {globalPricing.fee > 0 && (
-                <div className="flex justify-between text-gray-400">
-                  <span>Additional Fees</span>
-                  <span>+₹{globalPricing.fee.toLocaleString()}</span>
-                </div>
-              )}
+              {applicableRules.map((rule, idx) => {
+                let computedValue = rule.value;
+                if (rule.type === 'percentage') {
+                  computedValue = (subtotal * rule.value) / 100;
+                }
+                
+                return (
+                  <div key={rule._id || idx} className={`flex justify-between ${rule.action === 'subtract' ? 'text-accent font-medium' : 'text-gray-400'}`}>
+                    <span>{rule.name} {rule.type === 'percentage' && `(${rule.value}%)`}</span>
+                    <span>{rule.action === 'subtract' ? '-' : '+'}₹{computedValue.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</span>
+                  </div>
+                );
+              })}
               <div className="flex justify-between text-xl font-bold text-accent pt-3 border-t border-white/10">
                 <span>Total</span>
                 <span>₹{total.toLocaleString()}</span>

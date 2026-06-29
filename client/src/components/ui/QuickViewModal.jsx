@@ -60,7 +60,8 @@ export default function QuickViewModal({ product, isOpen, onClose, onAddToCart }
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-4xl bg-neutral-900 rounded-xl shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]"
+            className="relative w-full max-w-4xl bg-neutral-900 shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]"
+            style={{ borderRadius: 'var(--radius-popup, 0.75rem)' }}
           >
             <button 
               onClick={onClose}

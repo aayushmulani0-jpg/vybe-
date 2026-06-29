@@ -33,6 +33,7 @@ export default function Button({
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       className={cn(baseStyles, variants[variant], sizes[size], className)}
+      style={{ borderRadius: 'var(--radius-button, 0px)', ...props.style }}
       {...props}
     >
       {children}
