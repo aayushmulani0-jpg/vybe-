@@ -43,8 +43,7 @@ export default function Shop() {
         .then(res => res.json())
         .then(data => {
           if (data.success && data.collection && data.collection.products) {
-            const inStockProducts = data.collection.products.filter(p => p.stockStatus === 'In Stock');
-            const mappedProducts = inStockProducts.map(p => ({
+            const mappedProducts = data.collection.products.map(p => ({
               ...p,
               sizes: p.sizes || AVAILABLE_SIZES,
               printSizes: p.printSizes || AVAILABLE_PRINT_SIZES,
@@ -67,9 +66,7 @@ export default function Shop() {
       fetch(`${API_URL}/products`)
         .then(res => res.json())
         .then(data => {
-          // Filter out products that are not in stock
-          const inStockProducts = data.filter(p => p.stockStatus === 'In Stock');
-          const mappedProducts = inStockProducts.map(p => ({
+          const mappedProducts = data.map(p => ({
             ...p,
             sizes: p.sizes || AVAILABLE_SIZES,
             printSizes: p.printSizes || AVAILABLE_PRINT_SIZES,

@@ -125,19 +125,32 @@ export default function QuickViewModal({ product, isOpen, onClose, onAddToCart }
                 <div className="mb-6">
                   <h3 className="text-sm font-heading font-semibold text-secondary uppercase tracking-wider mb-3">Color</h3>
                   <div className="flex flex-wrap gap-2">
-                    {product.colors.map(color => (
-                      <button
-                        key={color}
-                        onClick={() => setSelectedColor(color)}
-                        className={`w-10 h-10 rounded-full border-2 transition-all flex items-center justify-center ${selectedColor === color ? 'border-accent scale-110' : 'border-white/20 hover:border-white/50'}`}
-                        style={{ backgroundColor: color }}
-                        title={color}
-                      >
-                        {selectedColor === color && (
-                          <FiCheck className={['#ffffff', '#fff', 'white'].includes(color.toLowerCase()) ? 'text-black' : 'text-white'} />
-                        )}
-                      </button>
-                    ))}
+                    {product.colors.map(color => {
+                      const isOOS = product.stockStatus === 'Out of Stock' || product.outOfStockColors?.includes(color);
+                      return (
+                        <button
+                          key={color}
+                          onClick={() => !isOOS && setSelectedColor(color)}
+                          disabled={isOOS}
+                          className={`w-10 h-10 rounded-full border-2 transition-all flex items-center justify-center relative ${
+                            selectedColor === color 
+                              ? 'border-accent scale-110' 
+                              : 'border-white/20 hover:border-white/50'
+                          } ${isOOS ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          style={{ backgroundColor: color }}
+                          title={color + (isOOS ? ' (Out of Stock)' : '')}
+                        >
+                          {selectedColor === color && !isOOS && (
+                            <FiCheck className={['#ffffff', '#fff', 'white'].includes(color.toLowerCase()) ? 'text-black' : 'text-white'} />
+                          )}
+                          {isOOS && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="w-10 h-0.5 bg-accent rotate-45 absolute shadow-sm"></div>
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -147,19 +160,31 @@ export default function QuickViewModal({ product, isOpen, onClose, onAddToCart }
                 <div className="mb-6">
                   <h3 className="text-sm font-heading font-semibold text-secondary uppercase tracking-wider mb-3">Size</h3>
                   <div className="flex flex-wrap gap-2">
-                    {product.sizes.map(size => (
-                      <button
-                        key={size}
-                        onClick={() => setSelectedSize(size)}
-                        className={`px-4 py-2 border transition-colors font-body text-sm ${
-                          selectedSize === size 
-                            ? 'border-accent bg-accent text-primary font-medium' 
-                            : 'border-white/20 text-gray-300 hover:border-white/50 bg-transparent'
-                        }`}
-                      >
-                        {size}
-                      </button>
-                    ))}
+                    {product.sizes.map(size => {
+                      const isOOS = product.stockStatus === 'Out of Stock' || product.outOfStockSizes?.includes(size);
+                      return (
+                        <button
+                          key={size}
+                          onClick={() => !isOOS && setSelectedSize(size)}
+                          disabled={isOOS}
+                          className={`px-4 py-2 border transition-colors font-body text-sm relative overflow-hidden ${
+                            selectedSize === size 
+                              ? 'border-accent bg-accent text-primary font-medium' 
+                              : isOOS 
+                                ? 'border-white/10 text-gray-500 bg-white/5 cursor-not-allowed'
+                                : 'border-white/20 text-gray-300 hover:border-white/50 bg-transparent'
+                          }`}
+                          title={isOOS ? 'Out of Stock' : ''}
+                        >
+                          {size}
+                          {isOOS && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="w-full h-px bg-accent/70 rotate-12 absolute"></div>
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -193,11 +218,12 @@ export default function QuickViewModal({ product, isOpen, onClose, onAddToCart }
 
               <div className="flex gap-3 mt-8">
                 <Button 
-                  variant="accent" 
-                  className="w-full flex justify-center items-center gap-2"
-                  onClick={handleAddToCart}
+                  variant={product.stockStatus === 'Out of Stock' ? 'outline' : 'accent'}
+                  className={`w-full flex justify-center items-center gap-2 ${product.stockStatus === 'Out of Stock' ? 'opacity-50 cursor-not-allowed border-accent/50 text-accent hover:bg-transparent hover:text-accent' : ''}`}
+                  onClick={product.stockStatus === 'Out of Stock' ? undefined : handleAddToCart}
+                  disabled={product.stockStatus === 'Out of Stock'}
                 >
-                  <FiShoppingBag /> Add to Cart
+                  <FiShoppingBag /> {product.stockStatus === 'Out of Stock' ? 'Out of Stock' : 'Add to Cart'}
                 </Button>
               </div>
             </div>

@@ -27,8 +27,16 @@ export default function Navbar() {
   return (
     <>
       {announcement && (
-        <div className="bg-accent text-primary text-center py-2 px-4 text-xs font-bold uppercase tracking-widest fixed top-0 left-0 w-full z-[60]">
-          {announcement}
+        <div className="bg-accent text-primary py-2 px-4 text-xs font-bold uppercase tracking-widest fixed top-0 left-0 w-full z-[60] marquee-container overflow-hidden">
+          {announcement.includes('\n') ? (
+            <div className="animate-marquee whitespace-nowrap flex gap-16 min-w-max px-4">
+              {announcement.split('\n').filter(text => text.trim() !== '').map((text, index) => (
+                <span key={index}>{text}</span>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center">{announcement}</div>
+          )}
         </div>
       )}
       <header className={`fixed left-0 w-full z-50 bg-primary/80 backdrop-blur-md border-b border-white/10 transition-all ${announcement ? 'top-[32px]' : 'top-0'}`}>

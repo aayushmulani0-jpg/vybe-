@@ -200,9 +200,9 @@ export default function Home() {
     return <div className="min-h-screen bg-primary flex items-center justify-center text-accent uppercase tracking-widest font-heading">Loading...</div>;
   }
 
-  const bestSellers = allProducts.filter(p => p.isBestSeller && p.stockStatus === 'In Stock');
-  const recommended = allProducts.filter(p => p.isRecommended && p.stockStatus === 'In Stock');
-  const newArrivals = allProducts.filter(p => p.isNewArrival && p.stockStatus === 'In Stock');
+  const bestSellers = allProducts.filter(p => p.isBestSeller);
+  const recommended = allProducts.filter(p => p.isRecommended);
+  const newArrivals = allProducts.filter(p => p.isNewArrival);
 
   return (
     <div className="w-full">
