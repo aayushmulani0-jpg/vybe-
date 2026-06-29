@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { FiHeart, FiShoppingBag } from 'react-icons/fi';
 import Button from './Button';
 
-export default function ProductCard({ product, isWholesale = false, onQuickAdd }) {
+export default function ProductCard({ product, isWholesale = false, onQuickAdd, collectionName }) {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -30,6 +30,11 @@ export default function ProductCard({ product, isWholesale = false, onQuickAdd }
 
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-col gap-2">
+          {collectionName && (
+            <span className="bg-accent/20 border border-accent/50 backdrop-blur-md shadow-[0_0_10px_rgba(163,255,18,0.2)] text-accent text-[10px] font-bold px-2 py-1 uppercase tracking-wider">
+              {collectionName}
+            </span>
+          )}
           {(!isWholesale && product.comparePrice && product.comparePrice > product.price) && (
             <span className="bg-accent text-primary text-xs font-bold px-2 py-1 uppercase tracking-wider">
               {Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100)}% OFF
@@ -73,7 +78,7 @@ export default function ProductCard({ product, isWholesale = false, onQuickAdd }
 
       {/* Product Details */}
       <div className="flex flex-col">
-        <Link to={isWholesale ? '/wholesale' : `/shop/${product.id}`} className="font-heading font-semibold text-lg text-secondary uppercase tracking-wider hover:text-accent transition-colors">
+        <Link to={isWholesale ? '/wholesale' : `/shop/${product._id || product.id}`} className="font-heading font-semibold text-lg text-secondary uppercase tracking-wider hover:text-accent transition-colors">
           {product.name}
         </Link>
         <div className="flex justify-between items-center mt-1">

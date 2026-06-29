@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiFilter, FiX, FiSearch } from 'react-icons/fi';
 import ProductCard from '../components/ui/ProductCard';
@@ -10,46 +11,75 @@ const AVAILABLE_SIZES = ['S', 'M', 'L', 'XL', 'Oversized'];
 const AVAILABLE_PRINT_SIZES = ['Left Chest Logo', '15 × 7 cm', 'A4', 'A3', 'Sleeve Print', 'Front + Back'];
 
 export default function Shop() {
+  const [searchParams] = useSearchParams();
+  const collectionId = searchParams.get('collection');
+
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [priceRange, setPriceRange] = useState([0, 2000]);
   const [selectedSizes, setSelectedSizes] = useState([]);
   const [selectedPrintSizes, setSelectedPrintSizes] = useState([]);
-  
+
   const [appliedFilters, setAppliedFilters] = useState({
     searchQuery: '',
     priceRange: [0, 2000],
     selectedSizes: [],
     selectedPrintSizes: []
   });
-  
+
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [collectionName, setCollectionName] = useState('');
 
   // Quick View State
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
 
   useEffect(() => {
-    fetch(`${API_URL}/products`)
-      .then(res => res.json())
-      .then(data => {
-        // Filter out products that are not in stock
-        const inStockProducts = data.filter(p => p.stockStatus === 'In Stock');
-        // ensure products have necessary arrays for the mock filters to work without crashing, though real backend schema doesn't have sizes/printSizes yet
-        const mappedProducts = inStockProducts.map(p => ({
-          ...p,
-          sizes: p.sizes || AVAILABLE_SIZES,
-          printSizes: p.printSizes || AVAILABLE_PRINT_SIZES,
-        }));
-        setProducts(mappedProducts);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("Failed to fetch products:", err);
-        setLoading(false);
-      });
-  }, []);
+    setLoading(true);
+    if (collectionId) {
+      fetch(`${API_URL}/collections/${collectionId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.collection && data.collection.products) {
+            const inStockProducts = data.collection.products.filter(p => p.stockStatus === 'In Stock');
+            const mappedProducts = inStockProducts.map(p => ({
+              ...p,
+              sizes: p.sizes || AVAILABLE_SIZES,
+              printSizes: p.printSizes || AVAILABLE_PRINT_SIZES,
+            }));
+            setProducts(mappedProducts);
+            setCollectionName(data.collection.name);
+          } else {
+            setProducts([]);
+          }
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error("Failed to fetch collection:", err);
+          setLoading(false);
+        });
+    } else {
+      setCollectionName('');
+      fetch(`${API_URL}/products`)
+        .then(res => res.json())
+        .then(data => {
+          // Filter out products that are not in stock
+          const inStockProducts = data.filter(p => p.stockStatus === 'In Stock');
+          const mappedProducts = inStockProducts.map(p => ({
+            ...p,
+            sizes: p.sizes || AVAILABLE_SIZES,
+            printSizes: p.printSizes || AVAILABLE_PRINT_SIZES,
+          }));
+          setProducts(mappedProducts);
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error("Failed to fetch products:", err);
+          setLoading(false);
+        });
+    }
+  }, [collectionId]);
 
   const handleOpenQuickView = (product) => {
     setSelectedProduct(product);
@@ -62,30 +92,30 @@ export default function Shop() {
     return products.filter(product => {
       // Search Filter
       const matchesSearch = product.name.toLowerCase().includes(appliedFilters.searchQuery.toLowerCase());
-      
+
       // Price Filter
       const matchesPrice = product.price >= appliedFilters.priceRange[0] && (appliedFilters.priceRange[1] === 2000 ? true : product.price <= appliedFilters.priceRange[1]);
-      
+
       // Size Filter
-      const matchesSize = appliedFilters.selectedSizes.length === 0 || 
-                          (product.sizes && appliedFilters.selectedSizes.some(size => product.sizes.includes(size)));
-                          
+      const matchesSize = appliedFilters.selectedSizes.length === 0 ||
+        (product.sizes && appliedFilters.selectedSizes.some(size => product.sizes.includes(size)));
+
       // Print Size Filter
-      const matchesPrintSize = appliedFilters.selectedPrintSizes.length === 0 || 
-                               (product.printSizes && appliedFilters.selectedPrintSizes.some(ps => product.printSizes.includes(ps)));
+      const matchesPrintSize = appliedFilters.selectedPrintSizes.length === 0 ||
+        (product.printSizes && appliedFilters.selectedPrintSizes.some(ps => product.printSizes.includes(ps)));
 
       return matchesSearch && matchesPrice && matchesSize && matchesPrintSize;
     });
   }, [products, appliedFilters]);
 
   const toggleSize = (size) => {
-    setSelectedSizes(prev => 
+    setSelectedSizes(prev =>
       prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size]
     );
   };
 
   const togglePrintSize = (size) => {
-    setSelectedPrintSizes(prev => 
+    setSelectedPrintSizes(prev =>
       prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size]
     );
   };
@@ -118,8 +148,8 @@ export default function Shop() {
       <div>
         <h3 className="text-secondary font-heading font-semibold uppercase tracking-wider mb-4">Search</h3>
         <div className="relative">
-          <input 
-            type="text" 
+          <input
+            type="text"
             placeholder="Search products..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -135,10 +165,10 @@ export default function Shop() {
           <h3 className="text-secondary font-heading font-semibold uppercase tracking-wider">Price Range</h3>
           <span className="text-accent text-sm">₹{priceRange[0]} - {priceRange[1] === 2000 ? '₹2000+' : `₹${priceRange[1]}`}</span>
         </div>
-        <input 
-          type="range" 
-          min="0" 
-          max="2000" 
+        <input
+          type="range"
+          min="0"
+          max="2000"
           step="50"
           value={priceRange[1]}
           onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
@@ -154,11 +184,10 @@ export default function Shop() {
             <button
               key={size}
               onClick={() => toggleSize(size)}
-              className={`px-3 py-1.5 text-sm font-body border transition-colors ${
-                selectedSizes.includes(size) 
-                  ? 'border-accent bg-accent text-primary' 
+              className={`px-3 py-1.5 text-sm font-body border transition-colors ${selectedSizes.includes(size)
+                  ? 'border-accent bg-accent text-primary'
                   : 'border-white/20 text-gray-400 hover:border-white/50'
-              }`}
+                }`}
             >
               {size}
             </button>
@@ -174,11 +203,10 @@ export default function Shop() {
             <button
               key={size}
               onClick={() => togglePrintSize(size)}
-              className={`px-3 py-1.5 text-xs font-body border transition-colors ${
-                selectedPrintSizes.includes(size) 
-                  ? 'border-accent bg-accent text-primary' 
+              className={`px-3 py-1.5 text-xs font-body border transition-colors ${selectedPrintSizes.includes(size)
+                  ? 'border-accent bg-accent text-primary'
                   : 'border-white/20 text-gray-400 hover:border-white/50'
-              }`}
+                }`}
             >
               {size}
             </button>
@@ -198,17 +226,28 @@ export default function Shop() {
   return (
     <div className="min-h-screen pt-24 pb-20 bg-primary">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-end mb-12 border-b border-white/10 pb-8">
           <div>
-            <h1 className="text-5xl md:text-7xl font-heading font-bold text-secondary uppercase tracking-tighter">
-              All <span className="text-accent italic">Products</span>
-            </h1>
+            {collectionName ? (
+              <div className="mb-2">
+                <span className="inline-block px-3 py-1 bg-accent/20 text-accent border border-accent/50 text-xs font-bold uppercase tracking-wider rounded-full shadow-[0_0_10px_rgba(163,255,18,0.2)] mb-4">
+                  Collection View
+                </span>
+                <h1 className="text-5xl md:text-7xl font-heading font-bold text-secondary uppercase tracking-tighter">
+                  {collectionName}
+                </h1>
+              </div>
+            ) : (
+              <h1 className="text-5xl md:text-7xl font-heading font-bold text-secondary uppercase tracking-tighter">
+                All <span className="text-accent italic">Products</span>
+              </h1>
+            )}
             <p className="text-gray-400 mt-2 font-body">Showing {filteredProducts.length} results</p>
           </div>
-          
-          <button 
+
+          <button
             className="md:hidden mt-6 flex items-center gap-2 text-secondary hover:text-accent"
             onClick={() => setIsMobileFiltersOpen(true)}
           >
@@ -231,7 +270,7 @@ export default function Shop() {
             ) : filteredProducts.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
                 {filteredProducts.map(product => (
-                  <ProductCard key={product._id || product.id} product={product} onQuickAdd={handleOpenQuickView} />
+                  <ProductCard key={product._id || product.id} product={product} onQuickAdd={handleOpenQuickView} collectionName={collectionName} />
                 ))}
               </div>
             ) : (
@@ -249,14 +288,14 @@ export default function Shop() {
       <AnimatePresence>
         {isMobileFiltersOpen && (
           <>
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsMobileFiltersOpen(false)}
               className="fixed inset-0 bg-black/80 z-[60] md:hidden"
             />
-            <motion.div 
+            <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
@@ -275,7 +314,7 @@ export default function Shop() {
         )}
       </AnimatePresence>
 
-      <QuickViewModal 
+      <QuickViewModal
         product={selectedProduct}
         isOpen={isQuickViewOpen}
         onClose={() => setIsQuickViewOpen(false)}

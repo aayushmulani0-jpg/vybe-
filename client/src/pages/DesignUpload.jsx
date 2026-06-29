@@ -174,8 +174,8 @@ export default function DesignUpload() {
           <div className="relative bg-neutral-900 rounded-lg p-8 flex items-start pt-12 justify-center min-h-[600px] border border-white/5 overflow-hidden">
             <div className="relative w-full max-w-md pointer-events-none">
               <img
-                src={TSHIRT_MOCKUP}
-                alt="Black Blank T-Shirt"
+                src={selectedCategory.productId?.image || TSHIRT_MOCKUP}
+                alt="Selected Blank T-Shirt"
                 className="w-full h-auto drop-shadow-2xl opacity-90"
               />
 

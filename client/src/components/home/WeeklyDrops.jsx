@@ -81,7 +81,8 @@ export default function WeeklyDrops() {
   }, []);
 
   return (
-    <section ref={containerRef} className="py-20 bg-primary overflow-hidden w-full relative">
+    <div>
+      <section ref={containerRef} className="py-20 bg-primary overflow-hidden w-full relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
         <div className="flex justify-between items-end">
           <div>
@@ -106,8 +107,8 @@ export default function WeeklyDrops() {
 
       {/* Horizontal Scroll Area */}
       <div className="md:h-[600px] w-full">
-        <div 
-          ref={scrollRef} 
+        <div
+          ref={scrollRef}
           className="flex gap-8 px-4 md:px-8 w-max md:flex-nowrap flex-wrap justify-center"
         >
           {DUMMY_PRODUCTS.map((product) => (
@@ -118,11 +119,12 @@ export default function WeeklyDrops() {
           {/* Duplicate for visual length in demo */}
           {DUMMY_PRODUCTS.map((product) => (
             <div key={`${product.id}-dup`} className="w-[300px] md:w-[400px] shrink-0">
-              <ProductCard product={{...product, id: product.id + 'dup'}} />
+              <ProductCard product={{ ...product, id: product.id + 'dup' }} />
             </div>
           ))}
         </div>
       </div>
     </section>
+    </div>
   );
 }
