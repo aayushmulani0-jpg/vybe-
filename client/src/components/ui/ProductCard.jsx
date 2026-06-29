@@ -3,9 +3,20 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { FiHeart, FiShoppingBag } from 'react-icons/fi';
 import Button from './Button';
+import { useUIStore } from '../../store/useUIStore';
 
 export default function ProductCard({ product, isWholesale = false, onQuickAdd, collectionName }) {
   const [isHovered, setIsHovered] = useState(false);
+  const setQuickViewProduct = useUIStore(state => state.setQuickViewProduct);
+
+  const handleQuickAdd = (e) => {
+    e.preventDefault();
+    if (onQuickAdd) {
+      onQuickAdd(product);
+    } else {
+      setQuickViewProduct(product);
+    }
+  };
 
   return (
     <motion.div 
@@ -69,7 +80,7 @@ export default function ProductCard({ product, isWholesale = false, onQuickAdd, 
               <FiShoppingBag /> Build Bulk Order
             </Button>
           ) : (
-            <Button variant="secondary" size="sm" className="w-full bg-white text-primary hover:bg-accent flex gap-2" onClick={() => onQuickAdd && onQuickAdd(product)}>
+            <Button variant="secondary" size="sm" className="w-full bg-white text-primary hover:bg-accent flex gap-2" onClick={handleQuickAdd}>
               <FiShoppingBag /> Buy Now
             </Button>
           )}
