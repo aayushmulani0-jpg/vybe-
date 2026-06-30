@@ -13,14 +13,7 @@ const TSHIRT_MOCKUP = "https://images.unsplash.com/photo-1583743814966-8936f5b7b
 
 // Will be fetched from backend dynamically
 
-const PRINT_ZONES = {
-  'Left Chest Logo': { top: '30%', left: '60%', width: '10%', height: '10%' },
-  '15 × 7 cm Chest Design': { top: '32%', left: '50%', transform: 'translateX(-50%)', width: '20%', height: '10%' },
-  'A4 Print': { top: '40%', left: '50%', transform: 'translateX(-50%)', width: '35%', height: '40%' },
-  'A3 Print': { top: '35%', left: '50%', transform: 'translateX(-50%)', width: '45%', height: '55%' },
-  'Sleeve Print': { top: '45%', left: '25%', width: '15%', height: '20%' },
-  'Front + Back Print': { top: '40%', left: '50%', transform: 'translateX(-50%)', width: '35%', height: '40%' },
-};
+// Print zones are now fetched dynamically from the backend
 
 const CATEGORIES = [
   { name: 'Oversized T-Shirts (220 GSM)', baseCost: 0 },
@@ -347,38 +340,36 @@ export default function CustomOrder() {
                 />
 
                 {/* Overlay Zones */}
-                {Object.keys(PRINT_ZONES).map(zoneName => {
-                  // Check if this zone is enabled by admin
-                  const activeStyle = printStyles.find(style => style.name === zoneName);
-                  if (!activeStyle || !activeStyle.isActive) return null;
+                {printStyles.map(activeStyle => {
+                  if (!activeStyle.isActive) return null;
 
-                  const zoneStyle = PRINT_ZONES[zoneName];
-                  const isSelectedPrint = selectedPrints.some(p => p.name === zoneName);
+                  const isSelectedPrint = selectedPrints.some(p => p.name === activeStyle.name);
                   if (!isSelectedPrint) return null; // Only show selected print areas
 
-                  const hasImage = !!uploadedImages[zoneName];
-                  const isActive = activeZone === zoneName;
+                  const hasImage = !!uploadedImages[activeStyle.name];
+                  const isActive = activeZone === activeStyle.name;
+                  
+                  const bounds = activeStyle.boundingBox || { top: 30, left: 40, width: 20, height: 20 };
 
                   return (
                     <div
-                      key={zoneName}
+                      key={activeStyle.name}
                       style={{
                         position: 'absolute',
-                        top: zoneStyle.top,
-                        left: zoneStyle.left,
-                        width: zoneStyle.width,
-                        height: zoneStyle.height,
-                        transform: zoneStyle.transform,
+                        top: `${bounds.top}%`,
+                        left: `${bounds.left}%`,
+                        width: `${bounds.width}%`,
+                        height: `${bounds.height}%`,
                       }}
                       className={`border-2 border-dashed flex items-center justify-center overflow-hidden transition-all duration-300 pointer-events-auto cursor-pointer ${isActive ? 'border-accent bg-accent/10 z-20' : 'border-white/20 hover:border-white/50 z-10'
                         }`}
-                      onClick={() => setActiveZone(zoneName)}
+                      onClick={() => setActiveZone(activeStyle.name)}
                     >
                       {hasImage ? (
-                        <img src={uploadedImages[zoneName]} alt="Uploaded Design" className="w-full h-full object-contain pointer-events-none" />
+                        <img src={uploadedImages[activeStyle.name]} alt="Uploaded Design" className="w-full h-full object-contain pointer-events-none" />
                       ) : (
                         <span className={`text-[10px] uppercase font-bold text-center p-1 pointer-events-none ${isActive ? 'text-accent' : 'text-gray-500'}`}>
-                          {zoneName}
+                          {activeStyle.name}
                         </span>
                       )}
                     </div>
