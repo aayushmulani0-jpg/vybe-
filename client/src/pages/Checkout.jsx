@@ -23,6 +23,7 @@ export default function Checkout() {
   const [selectedAddressId, setSelectedAddressId] = useState('');
   const [newAddress, setNewAddress] = useState({ street: '', city: '', state: '', zipCode: '' });
   const [showNewAddress, setShowNewAddress] = useState(false);
+  const [contactNumber, setContactNumber] = useState(user?.phone || '');
   
   const [pricingRules, setPricingRules] = useState([]);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
@@ -92,6 +93,10 @@ export default function Checkout() {
       alert("Please select a shipping address.", "error", "Missing Address");
       return;
     }
+    if (!contactNumber || contactNumber.trim() === '') {
+      alert("Please provide a contact number.", "error", "Missing Contact Number");
+      return;
+    }
     setIsPlacingOrder(true);
     
     const selectedAddress = addresses.find(a => a._id === selectedAddressId);
@@ -115,7 +120,7 @@ export default function Checkout() {
               orderType: 'Retail',
               customer: user.name,
               email: user.email,
-              phone: user.phone || 'N/A',
+              phone: contactNumber,
               shippingAddress: fullAddress,
               paymentMethod: 'Cash on Delivery',
               itemsList: retailItems.map(item => ({
@@ -141,7 +146,7 @@ export default function Checkout() {
               orderType: 'Wholesale',
               customer: user.name,
               email: user.email,
-              phone: user.phone || 'N/A',
+              phone: contactNumber,
               shippingAddress: fullAddress,
               paymentMethod: 'Cash on Delivery',
               itemsList: wholesaleItems.map(item => ({
@@ -170,7 +175,7 @@ export default function Checkout() {
               orderType: 'CustomPrint',
               customer: user.name,
               email: user.email,
-              phone: user.phone || 'N/A',
+              phone: contactNumber,
               shippingAddress: fullAddress,
               paymentMethod: 'Cash on Delivery',
               itemsList: customItems.map(item => ({
@@ -250,6 +255,18 @@ export default function Checkout() {
           <h2 className="text-3xl font-heading font-bold text-secondary uppercase tracking-wider mb-8">Checkout</h2>
           
           <div className="bg-neutral-900 rounded-xl p-6 border border-white/10 mb-6">
+            <h3 className="text-xl font-semibold text-white mb-4">Contact Information</h3>
+            <div className="mb-6">
+              <label className="block text-gray-400 text-sm mb-2">Phone Number</label>
+              <input 
+                type="tel" 
+                value={contactNumber} 
+                onChange={(e) => setContactNumber(e.target.value)} 
+                placeholder="Enter your contact number" 
+                className="w-full bg-neutral-950 border border-white/20 rounded-md p-3 text-white focus:border-accent outline-none"
+              />
+            </div>
+
             <h3 className="text-xl font-semibold text-white mb-4">Shipping Address</h3>
             
             {addresses.length > 0 && (
