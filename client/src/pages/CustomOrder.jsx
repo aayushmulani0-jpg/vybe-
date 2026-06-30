@@ -348,7 +348,7 @@ export default function CustomOrder() {
 
                   const hasImage = !!uploadedImages[activeStyle.name];
                   const isActive = activeZone === activeStyle.name;
-                  
+
                   const bounds = activeStyle.boundingBox || { top: 30, left: 40, width: 20, height: 20 };
 
                   return (
@@ -408,8 +408,8 @@ export default function CustomOrder() {
                             }
                           }}
                           className={`flex items-center gap-2 px-3 py-2 border rounded-sm text-sm font-body transition-colors group ${activeCombo && activeCombo._id === combo._id
-                              ? 'border-accent bg-accent/10 text-accent'
-                              : 'border-white/10 text-gray-300 hover:border-accent hover:text-accent'
+                            ? 'border-accent bg-accent/10 text-accent'
+                            : 'border-white/10 text-gray-300 hover:border-accent hover:text-accent'
                             }`}
                         >
                           <FiZap className="w-3 h-3 text-accent/60 group-hover:text-accent" />
@@ -470,7 +470,7 @@ export default function CustomOrder() {
                     </div>
                   </>
                 )}
-                
+
                 {customPrintNotice && (
                   <div className="mt-6 bg-accent/10 border border-accent/20 p-4 rounded-lg">
                     <p className="text-accent text-sm font-medium">{customPrintNotice}</p>
@@ -542,8 +542,8 @@ export default function CustomOrder() {
                         key={size}
                         onClick={() => setSelectedSize(size)}
                         className={`w-12 h-10 border rounded font-bold transition-colors ${selectedSize === size
-                            ? 'border-accent bg-accent/20 text-accent'
-                            : 'border-white/10 text-gray-400 hover:border-accent hover:text-accent'
+                          ? 'border-accent bg-accent/20 text-accent'
+                          : 'border-white/10 text-gray-400 hover:border-accent hover:text-accent'
                           }`}
                       >
                         {size}
@@ -599,7 +599,7 @@ export default function CustomOrder() {
                   <div className="bg-accent/10 border border-accent/20 p-4 rounded-lg mb-4">
                     <p className="text-accent text-sm font-medium">Note: We will be using plain t-shirts and print your reference design.</p>
                   </div>
-                  
+
                   <h3 className="text-secondary font-heading uppercase tracking-wider mb-4">
                     Printing Instructions
                   </h3>
