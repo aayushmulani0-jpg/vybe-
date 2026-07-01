@@ -12,7 +12,7 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [announcement, setAnnouncement] = useState('');
   const [hidden, setHidden] = useState(false);
-  
+
   const { scrollY } = useScroll();
   const getCartCount = useCartStore(state => state.getCartCount);
   const user = useAuthStore(state => state.user);
@@ -53,7 +53,7 @@ export default function Navbar() {
           )}
         </div>
       )}
-      <motion.header 
+      <motion.header
         variants={{ visible: { y: 0 }, hidden: { y: "-100%" } }}
         animate={hidden ? "hidden" : "visible"}
         transition={{ duration: 0.35, ease: "easeInOut" }}
@@ -62,7 +62,7 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             {/* Mobile Menu Button */}
-            <button 
+            <button
               className="md:hidden text-secondary hover:text-accent transition-colors"
               onClick={() => setIsMobileMenuOpen(true)}
             >
@@ -111,7 +111,7 @@ export default function Navbar() {
               >
                 <FiShoppingBag className="w-5 h-5 group-hover:scale-110 transition-transform" />
                 {cartCount > 0 && (
-                  <motion.span 
+                  <motion.span
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     className="absolute -top-2 -right-2 bg-accent text-primary text-xs font-bold w-4 h-4 rounded-full flex items-center justify-center"
@@ -135,13 +135,13 @@ export default function Navbar() {
             transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
             className="fixed inset-0 z-[100] bg-primary flex flex-col justify-center items-center"
           >
-            <button 
+            <button
               className="absolute top-6 right-6 text-secondary hover:text-accent transition-colors"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               <FiX className="w-8 h-8" />
             </button>
-            
+
             <nav className="flex flex-col items-center space-y-8 text-3xl font-heading font-bold uppercase tracking-widest">
               {['Shop', 'Wholesale', 'Custom Print', 'About'].map((item, i) => (
                 <motion.div
@@ -151,7 +151,7 @@ export default function Navbar() {
                   exit={{ y: 20, opacity: 0 }}
                   transition={{ delay: 0.1 * i, duration: 0.5 }}
                 >
-                  <Link 
+                  <Link
                     to={item === 'Shop' ? '/shop' : item === 'Custom Print' ? '/custom' : `/${item.toLowerCase()}`}
                     className="text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400 hover:from-accent hover:to-accent-2 transition-all"
                     onClick={() => setIsMobileMenuOpen(false)}
@@ -160,7 +160,7 @@ export default function Navbar() {
                   </Link>
                 </motion.div>
               ))}
-              
+
               <motion.div
                 initial={{ y: 50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}

@@ -11,6 +11,7 @@ import Catalogue from './pages/Catalogue';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Checkout from './pages/Checkout';
+import OrderSuccess from './pages/OrderSuccess';
 import Profile from './pages/Profile';
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
           <Route path="checkout" element={<Checkout />} />
+          <Route path="order-success" element={<OrderSuccess />} />
           <Route path="profile" element={<Profile />} />
         </Route>
       </Routes>

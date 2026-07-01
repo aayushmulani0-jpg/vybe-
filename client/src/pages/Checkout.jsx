@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../store/useAuthStore';
 import { useCartStore } from '../store/useCartStore';
 import { API_URL } from '../config';
 import Button from '../components/ui/Button';
 import { useUIStore } from '../store/useUIStore';
 import AnimatedSection from '../components/ui/AnimatedSection';
+import { FiCheck, FiEdit2, FiPlus, FiMapPin, FiPhone } from 'react-icons/fi';
 
 export default function Checkout() {
   const user = useAuthStore(state => state.user);
@@ -22,10 +23,13 @@ export default function Checkout() {
 
   const [addresses, setAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState('');
-  const [newAddress, setNewAddress] = useState({ street: '', city: '', state: '', zipCode: '' });
-  const [showNewAddress, setShowNewAddress] = useState(false);
-  const [contactNumber, setContactNumber] = useState(user?.phone || '');
   
+  // Form State
+  const [isEditing, setIsEditing] = useState(false);
+  const [addressForm, setAddressForm] = useState({ _id: '', address: '', phone: '' });
+  const [isSavingAddress, setIsSavingAddress] = useState(false);
+
+  // Order State
   const [pricingRules, setPricingRules] = useState([]);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
@@ -44,9 +48,18 @@ export default function Checkout() {
       if (res.ok) {
         const data = await res.json();
         setAddresses(data);
-        const defaultAddr = data.find(a => a.isDefault);
-        if (defaultAddr) setSelectedAddressId(defaultAddr._id);
-        else if (data.length > 0) setSelectedAddressId(data[0]._id);
+        
+        if (data.length > 0) {
+          // If we don't have one selected, pick the default or the first one
+          if (!selectedAddressId || !data.find(a => a._id === selectedAddressId)) {
+            const defaultAddr = data.find(a => a.isDefault) || data[0];
+            setSelectedAddressId(defaultAddr._id);
+          }
+          setIsEditing(false);
+        } else {
+          // No addresses, force them to add one
+          setIsEditing(true);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -65,46 +78,97 @@ export default function Checkout() {
     }
   };
 
+  const handleAddNew = () => {
+    setAddressForm({ _id: '', address: '', phone: '' });
+    setIsEditing(true);
+  };
+
+  const handleEdit = (addr) => {
+    setAddressForm({ _id: addr._id, address: addr.street || '', phone: addr.phone || '' });
+    setIsEditing(true);
+  };
+
   const handleSaveAddress = async (e) => {
     e.preventDefault();
+    if (!addressForm.address.trim() || !addressForm.phone.trim()) {
+      alert("Please fill in all address fields.", "error", "Missing Details");
+      return;
+    }
+
+    setIsSavingAddress(true);
     try {
-      const res = await fetch(`${API_URL}/auth/me/addresses`, {
-        method: 'POST',
-        headers: { 
+      const url = addressForm._id 
+        ? `${API_URL}/auth/me/addresses/${addressForm._id}` 
+        : `${API_URL}/auth/me/addresses`;
+      const method = addressForm._id ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method: method,
+        headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}` 
+          Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ ...newAddress, isDefault: addresses.length === 0 })
+        body: JSON.stringify({ 
+          street: addressForm.address, 
+          city: '-', 
+          state: '-', 
+          zipCode: '-', 
+          phone: addressForm.phone, 
+          isDefault: addresses.length === 0 // Make default if it's their first address
+        })
       });
-      if (res.ok) {
-        const updated = await res.json();
-        setAddresses(updated);
-        setShowNewAddress(false);
-        setNewAddress({ street: '', city: '', state: '', zipCode: '' });
-        const added = updated[updated.length - 1];
-        if (added) setSelectedAddressId(added._id);
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          alert("Your session has expired. Please log in again.", "error", "Session Expired");
+          useAuthStore.getState().logout();
+          navigate('/login');
+          return;
+        }
+        const errText = await res.text();
+        throw new Error(`Failed to save address: ${errText}`);
       }
+      
+      const updatedAddresses = await res.json();
+      setAddresses(updatedAddresses);
+      
+      // Auto-select the address we just created/edited
+      if (method === 'POST') {
+        setSelectedAddressId(updatedAddresses[updatedAddresses.length - 1]._id);
+      } else {
+        setSelectedAddressId(addressForm._id);
+      }
+      
+      setIsEditing(false);
+      alert("Address saved successfully!", "success", "Saved");
     } catch (err) {
       console.error(err);
+      alert("Error saving address: " + (err.message || 'Unknown error'), "error", "Error");
+    } finally {
+      setIsSavingAddress(false);
     }
   };
 
   const handlePlaceOrder = async () => {
+    if (isEditing) {
+      alert("Please save your address first before placing the order.", "error", "Save Address");
+      return;
+    }
     if (!selectedAddressId) {
-      alert("Please select a shipping address.", "error", "Missing Address");
+      alert("Please select a delivery address.", "error", "Select Address");
       return;
     }
-    if (!contactNumber || contactNumber.trim() === '') {
-      alert("Please provide a contact number.", "error", "Missing Contact Number");
-      return;
-    }
-    setIsPlacingOrder(true);
-    
+
     const selectedAddress = addresses.find(a => a._id === selectedAddressId);
-    const fullAddress = `${selectedAddress.street}, ${selectedAddress.city}, ${selectedAddress.state} - ${selectedAddress.zipCode}`;
+    if (!selectedAddress) return;
     
+    setIsPlacingOrder(true);
+
     try {
-      // Group items by orderType so we send properly formatted orders
+      const fullAddress = selectedAddress.street;
+      const orderPhone = selectedAddress.phone;
+
+      // Group items by orderType
       const retailItems = items.filter(i => i.orderType === 'Retail' || !i.orderType);
       const wholesaleItems = items.filter(i => i.orderType === 'Wholesale');
       const customItems = items.filter(i => i.orderType === 'CustomPrint');
@@ -121,7 +185,7 @@ export default function Checkout() {
               orderType: 'Retail',
               customer: user.name,
               email: user.email,
-              phone: contactNumber,
+              phone: orderPhone,
               shippingAddress: fullAddress,
               paymentMethod: 'Cash on Delivery',
               itemsList: retailItems.map(item => ({
@@ -147,7 +211,7 @@ export default function Checkout() {
               orderType: 'Wholesale',
               customer: user.name,
               email: user.email,
-              phone: contactNumber,
+              phone: orderPhone,
               shippingAddress: fullAddress,
               paymentMethod: 'Cash on Delivery',
               itemsList: wholesaleItems.map(item => ({
@@ -176,7 +240,7 @@ export default function Checkout() {
               orderType: 'CustomPrint',
               customer: user.name,
               email: user.email,
-              phone: contactNumber,
+              phone: orderPhone,
               shippingAddress: fullAddress,
               paymentMethod: 'Cash on Delivery',
               itemsList: customItems.map(item => ({
@@ -198,13 +262,13 @@ export default function Checkout() {
 
       const results = await Promise.all(orderPromises);
       const allOk = results.every(r => r.ok);
-      
+
       if (allOk) {
-        alert("Order Placed Successfully!", "success", "Success");
+        const createdOrders = await Promise.all(results.map(r => r.json()));
+        const finalOrders = createdOrders.map(data => data.order || data);
         clearCart();
-        navigate('/');
+        navigate('/order-success', { state: { orders: finalOrders } });
       } else {
-        // Try to read error from first failed response
         const failed = results.find(r => !r.ok);
         const errData = await failed.json().catch(() => ({}));
         throw new Error(errData.message || 'Failed to place order');
@@ -217,10 +281,6 @@ export default function Checkout() {
     }
   };
 
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-
   if (items.length === 0) {
     return (
       <div className="min-h-screen pt-32 px-4 flex flex-col items-center justify-center">
@@ -232,7 +292,7 @@ export default function Checkout() {
 
   const subtotal = getCartTotal();
   let total = subtotal;
-  
+
   const applicableRules = pricingRules.filter(rule => !rule.minSubtotal || subtotal >= rule.minSubtotal);
 
   applicableRules.forEach(rule => {
@@ -252,85 +312,131 @@ export default function Checkout() {
     <div className="min-h-screen pt-32 pb-12 px-4 sm:px-6 bg-primary relative overflow-hidden">
       <div className="gradient-orb gradient-orb-accent w-[300px] h-[300px] -top-20 -right-20 animate-float" />
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 relative z-10">
+        
         {/* Left Column: Shipping details */}
         <AnimatedSection direction="left">
           <h2 className="text-3xl font-heading font-bold text-secondary uppercase tracking-wider mb-8">Checkout</h2>
-          
+
           <div className="glass-card p-6 mb-6">
-            <h3 className="text-xl font-semibold text-white mb-4">Contact Information</h3>
-            <div className="mb-6">
-              <label className="block text-gray-400 text-sm mb-2">Phone Number</label>
-              <input 
-                type="tel" 
-                value={contactNumber} 
-                onChange={(e) => setContactNumber(e.target.value)} 
-                placeholder="Enter your contact number" 
-                className="w-full bg-neutral-950 border border-white/20 rounded-md p-3 text-white focus:border-accent outline-none"
-              />
-            </div>
+            <h3 className="text-xl font-semibold text-white mb-6">Delivery Details</h3>
 
-            <h3 className="text-xl font-semibold text-white mb-4">Shipping Address</h3>
-            
-            {addresses.length > 0 && (
-              <div className="space-y-3 mb-6">
-                {addresses.map(addr => (
-                  <label key={addr._id} className={`block p-4 rounded-lg border cursor-pointer transition-colors ${selectedAddressId === addr._id ? 'border-accent bg-accent/10' : 'border-white/10 bg-neutral-950 hover:border-white/20'}`}>
-                    <div className="flex items-center gap-3">
-                      <input 
-                        type="radio" 
-                        name="address" 
-                        checked={selectedAddressId === addr._id}
-                        onChange={() => setSelectedAddressId(addr._id)}
-                        className="text-accent focus:ring-accent bg-neutral-900 border-white/20"
-                      />
-                      <div>
-                        <span className="font-semibold text-white mr-2">{addr.label}</span>
-                        {addr.isDefault && <span className="text-xs bg-white/10 text-gray-300 px-2 py-0.5 rounded">Default</span>}
-                        <p className="text-gray-400 text-sm mt-1">{addr.street}, {addr.city}, {addr.state} - {addr.zipCode}</p>
+            <AnimatePresence mode="wait">
+              {/* ADDRESS LIST MODE */}
+              {!isEditing && (
+                <motion.div 
+                  key="list"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="space-y-4"
+                >
+                  {addresses.map((addr) => (
+                    <div 
+                      key={addr._id}
+                      onClick={() => setSelectedAddressId(addr._id)}
+                      className={`relative p-5 rounded-xl border transition-all cursor-pointer flex gap-4 ${
+                        selectedAddressId === addr._id 
+                          ? 'bg-accent/10 border-accent' 
+                          : 'bg-neutral-900 border-white/10 hover:border-white/30'
+                      }`}
+                    >
+                      <div className="pt-1">
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                          selectedAddressId === addr._id ? 'border-accent' : 'border-gray-500'
+                        }`}>
+                          {selectedAddressId === addr._id && <div className="w-2.5 h-2.5 bg-accent rounded-full" />}
+                        </div>
                       </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <FiMapPin className={selectedAddressId === addr._id ? 'text-accent' : 'text-gray-400'} />
+                          <span className="font-semibold text-white">{addr.label || 'Home'}</span>
+                          {addr.isDefault && (
+                            <span className="text-[10px] uppercase tracking-wider bg-white/10 text-gray-300 px-2 py-0.5 rounded-full ml-2">Default</span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-300 mb-2 leading-relaxed">{addr.street}</p>
+                        <div className="flex items-center gap-2 text-sm text-gray-400">
+                          <FiPhone className="w-3.5 h-3.5" />
+                          <span>{addr.phone}</span>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleEdit(addr); }}
+                        className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+                        title="Edit Address"
+                      >
+                        <FiEdit2 className="w-4 h-4" />
+                      </button>
                     </div>
-                  </label>
-                ))}
-              </div>
-            )}
+                  ))}
 
-            {!showNewAddress ? (
-              <Button variant="outline" onClick={() => setShowNewAddress(true)}>+ Add New Address</Button>
-            ) : (
-              <motion.form 
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                onSubmit={handleSaveAddress}
-                className="space-y-4 bg-neutral-950 p-4 rounded-lg border border-white/5"
-              >
-                <input 
-                  required type="text" placeholder="Street Address" 
-                  value={newAddress.street} onChange={e => setNewAddress({...newAddress, street: e.target.value})}
-                  className="w-full bg-neutral-900 border border-white/20 rounded-md p-3 text-white focus:border-accent outline-none"
-                />
-                <div className="grid grid-cols-2 gap-3">
-                  <input 
-                    required type="text" placeholder="City" 
-                    value={newAddress.city} onChange={e => setNewAddress({...newAddress, city: e.target.value})}
-                    className="w-full bg-neutral-900 border border-white/20 rounded-md p-3 text-white focus:border-accent outline-none"
-                  />
-                  <input 
-                    required type="text" placeholder="State" 
-                    value={newAddress.state} onChange={e => setNewAddress({...newAddress, state: e.target.value})}
-                    className="w-full bg-neutral-900 border border-white/20 rounded-md p-3 text-white focus:border-accent outline-none"
-                  />
-                </div>
-                <input 
-                  required type="text" placeholder="Zip Code" 
-                  value={newAddress.zipCode} onChange={e => setNewAddress({...newAddress, zipCode: e.target.value})}
-                  className="w-full bg-neutral-900 border border-white/20 rounded-md p-3 text-white focus:border-accent outline-none"
-                />
-                <div className="flex gap-2">
-                  <Button type="submit" variant="accent">Save Address</Button>
-                  <Button type="button" variant="outline" onClick={() => setShowNewAddress(false)}>Cancel</Button>
-                </div>
-              </motion.form>
-            )}
+                  <button 
+                    onClick={handleAddNew}
+                    className="w-full py-4 mt-4 border-2 border-dashed border-white/20 rounded-xl text-gray-300 hover:text-white hover:border-white/50 hover:bg-white/5 transition-all flex items-center justify-center gap-2"
+                  >
+                    <FiPlus /> Add New Address
+                  </button>
+                </motion.div>
+              )}
+
+              {/* FORM MODE */}
+              {isEditing && (
+                <motion.div 
+                  key="form"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                >
+                  <form onSubmit={handleSaveAddress} className="space-y-5 bg-neutral-900/50 p-5 rounded-xl border border-white/10">
+                    <div className="flex justify-between items-center mb-2">
+                      <h4 className="text-white font-medium">{addressForm._id ? 'Edit Address' : 'New Address'}</h4>
+                      {addresses.length > 0 && (
+                        <button type="button" onClick={() => setIsEditing(false)} className="text-sm text-gray-400 hover:text-white">
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-400 mb-2">Full Shipping Address</label>
+                      <textarea
+                        required
+                        placeholder="Enter your complete delivery address..."
+                        value={addressForm.address} 
+                        onChange={e => setAddressForm({ ...addressForm, address: e.target.value })}
+                        rows={3}
+                        className="w-full bg-neutral-900 border border-white/20 rounded-md p-3 text-white focus:border-accent focus:ring-1 focus:ring-accent outline-none custom-scrollbar resize-none transition-all text-sm"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-400 mb-2">Mobile Number</label>
+                      <input
+                        required 
+                        type="tel" 
+                        placeholder="e.g. +91 98765 43210"
+                        value={addressForm.phone} 
+                        onChange={e => setAddressForm({ ...addressForm, phone: e.target.value })}
+                        className="w-full bg-neutral-900 border border-white/20 rounded-md p-3 text-white focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all text-sm"
+                      />
+                    </div>
+
+                    <div className="pt-2">
+                      <Button
+                        type="submit"
+                        variant="accent"
+                        className="w-full py-3"
+                        disabled={isSavingAddress}
+                      >
+                        {isSavingAddress ? 'Saving...' : 'Save Address'}
+                      </Button>
+                    </div>
+                  </form>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
           </div>
         </AnimatedSection>
 
@@ -338,7 +444,7 @@ export default function Checkout() {
         <AnimatedSection direction="right" delay={0.15}>
           <div className="glass-card p-6 sticky top-32">
             <h3 className="text-xl font-semibold text-white mb-6">Order Summary</h3>
-            
+
             <div className="space-y-4 mb-6 max-h-[40vh] overflow-y-auto custom-scrollbar pr-2">
               {items.map(item => (
                 <div key={item.cartId} className="flex justify-between items-center bg-neutral-950 p-3 rounded-md border border-white/5">
@@ -366,7 +472,7 @@ export default function Checkout() {
                 if (rule.type === 'percentage') {
                   computedValue = (subtotal * rule.value) / 100;
                 }
-                
+
                 return (
                   <div key={rule._id || idx} className={`flex justify-between ${rule.action === 'subtract' ? 'text-accent font-medium' : 'text-gray-400'}`}>
                     <span>{rule.name} {rule.type === 'percentage' && `(${rule.value}%)`}</span>
@@ -380,13 +486,13 @@ export default function Checkout() {
               </div>
             </div>
 
-            <Button 
-              variant="accent" 
-              className="w-full mt-6 py-4 text-lg"
+            <Button
+              variant={isEditing ? 'outline' : 'accent'}
+              className={`w-full mt-6 py-4 text-lg uppercase tracking-wide font-bold ${isEditing ? 'opacity-50 cursor-not-allowed' : ''}`}
               onClick={handlePlaceOrder}
-              disabled={isPlacingOrder || !selectedAddressId}
+              disabled={isPlacingOrder || isEditing}
             >
-              {isPlacingOrder ? 'Processing...' : 'Place Order'}
+              {isPlacingOrder ? 'Processing...' : (isEditing ? 'Save Address to Proceed' : 'Place Order')}
             </Button>
           </div>
         </AnimatedSection>
