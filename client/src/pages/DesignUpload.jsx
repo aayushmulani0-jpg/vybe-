@@ -54,6 +54,14 @@ export default function DesignUpload() {
 
   const processFile = (file) => {
     if (file && activeZone) {
+      if (!file.type.startsWith('image/')) {
+        alert('Only image files are allowed!', 'error', 'Invalid File');
+        return;
+      }
+      if (file.size > 3 * 1024 * 1024) {
+        alert('File size exceeds the 3MB limit. Please choose a smaller image.', 'error', 'File Too Large');
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         setUploadedImages(prev => ({ ...prev, [activeZone]: reader.result }));

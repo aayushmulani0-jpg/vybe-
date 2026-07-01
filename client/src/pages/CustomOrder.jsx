@@ -236,7 +236,14 @@ export default function CustomOrder() {
   };
 
   const handleFileUpload = (file) => {
-    if (!file.type.startsWith('image/')) return;
+    if (!file.type.startsWith('image/')) {
+      alert('Only image files are allowed!', 'error', 'Invalid File');
+      return;
+    }
+    if (file.size > 3 * 1024 * 1024) {
+      alert('File size exceeds the 3MB limit. Please choose a smaller image.', 'error', 'File Too Large');
+      return;
+    }
     const url = URL.createObjectURL(file);
     setUploadedImages(prev => ({
       ...prev,
