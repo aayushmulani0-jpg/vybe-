@@ -23,7 +23,7 @@ export default function Checkout() {
 
   const [addresses, setAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState('');
-  
+
   // Form State
   const [isEditing, setIsEditing] = useState(false);
   const [addressForm, setAddressForm] = useState({ _id: '', address: '', phone: '' });
@@ -48,7 +48,7 @@ export default function Checkout() {
       if (res.ok) {
         const data = await res.json();
         setAddresses(data);
-        
+
         if (data.length > 0) {
           // If we don't have one selected, pick the default or the first one
           if (!selectedAddressId || !data.find(a => a._id === selectedAddressId)) {
@@ -97,8 +97,8 @@ export default function Checkout() {
 
     setIsSavingAddress(true);
     try {
-      const url = addressForm._id 
-        ? `${API_URL}/auth/me/addresses/${addressForm._id}` 
+      const url = addressForm._id
+        ? `${API_URL}/auth/me/addresses/${addressForm._id}`
         : `${API_URL}/auth/me/addresses`;
       const method = addressForm._id ? 'PUT' : 'POST';
 
@@ -108,12 +108,12 @@ export default function Checkout() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ 
-          street: addressForm.address, 
-          city: '-', 
-          state: '-', 
-          zipCode: '-', 
-          phone: addressForm.phone, 
+        body: JSON.stringify({
+          street: addressForm.address,
+          city: '-',
+          state: '-',
+          zipCode: '-',
+          phone: addressForm.phone,
           isDefault: addresses.length === 0 // Make default if it's their first address
         })
       });
@@ -128,17 +128,17 @@ export default function Checkout() {
         const errText = await res.text();
         throw new Error(`Failed to save address: ${errText}`);
       }
-      
+
       const updatedAddresses = await res.json();
       setAddresses(updatedAddresses);
-      
+
       // Auto-select the address we just created/edited
       if (method === 'POST') {
         setSelectedAddressId(updatedAddresses[updatedAddresses.length - 1]._id);
       } else {
         setSelectedAddressId(addressForm._id);
       }
-      
+
       setIsEditing(false);
       alert("Address saved successfully!", "success", "Saved");
     } catch (err) {
@@ -161,7 +161,7 @@ export default function Checkout() {
 
     const selectedAddress = addresses.find(a => a._id === selectedAddressId);
     if (!selectedAddress) return;
-    
+
     setIsPlacingOrder(true);
 
     try {
@@ -312,7 +312,7 @@ export default function Checkout() {
     <div className="min-h-screen pt-32 pb-12 px-4 sm:px-6 bg-primary relative overflow-hidden">
       <div className="gradient-orb gradient-orb-accent w-[300px] h-[300px] -top-20 -right-20 animate-float" />
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 relative z-10">
-        
+
         {/* Left Column: Shipping details */}
         <AnimatedSection direction="left">
           <h2 className="text-3xl font-heading font-bold text-secondary uppercase tracking-wider mb-8">Checkout</h2>
@@ -323,7 +323,7 @@ export default function Checkout() {
             <AnimatePresence mode="wait">
               {/* ADDRESS LIST MODE */}
               {!isEditing && (
-                <motion.div 
+                <motion.div
                   key="list"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -331,19 +331,17 @@ export default function Checkout() {
                   className="space-y-4"
                 >
                   {addresses.map((addr) => (
-                    <div 
+                    <div
                       key={addr._id}
                       onClick={() => setSelectedAddressId(addr._id)}
-                      className={`relative p-5 rounded-xl border transition-all cursor-pointer flex gap-4 ${
-                        selectedAddressId === addr._id 
-                          ? 'bg-accent/10 border-accent' 
-                          : 'bg-neutral-900 border-white/10 hover:border-white/30'
-                      }`}
+                      className={`relative p-5 rounded-xl border transition-all cursor-pointer flex gap-4 ${selectedAddressId === addr._id
+                        ? 'bg-accent/10 border-accent'
+                        : 'bg-neutral-900 border-white/10 hover:border-white/30'
+                        }`}
                     >
                       <div className="pt-1">
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                          selectedAddressId === addr._id ? 'border-accent' : 'border-gray-500'
-                        }`}>
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${selectedAddressId === addr._id ? 'border-accent' : 'border-gray-500'
+                          }`}>
                           {selectedAddressId === addr._id && <div className="w-2.5 h-2.5 bg-accent rounded-full" />}
                         </div>
                       </div>
@@ -361,7 +359,7 @@ export default function Checkout() {
                           <span>{addr.phone}</span>
                         </div>
                       </div>
-                      <button 
+                      <button
                         onClick={(e) => { e.stopPropagation(); handleEdit(addr); }}
                         className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors"
                         title="Edit Address"
@@ -371,7 +369,7 @@ export default function Checkout() {
                     </div>
                   ))}
 
-                  <button 
+                  <button
                     onClick={handleAddNew}
                     className="w-full py-4 mt-4 border-2 border-dashed border-white/20 rounded-xl text-gray-300 hover:text-white hover:border-white/50 hover:bg-white/5 transition-all flex items-center justify-center gap-2"
                   >
@@ -382,7 +380,7 @@ export default function Checkout() {
 
               {/* FORM MODE */}
               {isEditing && (
-                <motion.div 
+                <motion.div
                   key="form"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -397,26 +395,26 @@ export default function Checkout() {
                         </button>
                       )}
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-400 mb-2">Full Shipping Address</label>
                       <textarea
                         required
                         placeholder="Enter your complete delivery address..."
-                        value={addressForm.address} 
+                        value={addressForm.address}
                         onChange={e => setAddressForm({ ...addressForm, address: e.target.value })}
                         rows={3}
                         className="w-full bg-neutral-900 border border-white/20 rounded-md p-3 text-white focus:border-accent focus:ring-1 focus:ring-accent outline-none custom-scrollbar resize-none transition-all text-sm"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-400 mb-2">Mobile Number</label>
                       <input
-                        required 
-                        type="tel" 
+                        required
+                        type="tel"
                         placeholder="e.g. +91 98765 43210"
-                        value={addressForm.phone} 
+                        value={addressForm.phone}
                         onChange={e => setAddressForm({ ...addressForm, phone: e.target.value })}
                         className="w-full bg-neutral-900 border border-white/20 rounded-md p-3 text-white focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all text-sm"
                       />

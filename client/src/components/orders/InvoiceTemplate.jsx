@@ -13,7 +13,7 @@ export default function InvoiceTemplate({ order, documentType = 'INVOICE' }) {
   if (!order) return null;
 
   const items = order.itemsList || [];
-  
+
   // Calculate totals
   const subTotal = items.reduce((sum, item) => sum + (item.itemTotal || (item.price * (item.qty || 1))), 0);
   const total = order.total || subTotal;
@@ -29,8 +29,8 @@ export default function InvoiceTemplate({ order, documentType = 'INVOICE' }) {
     <div
       id={`master_order_${documentType.toLowerCase()}`}
       style={{
-        width: '794px', // Standard A4 width at 96 DPI
-        minHeight: '1123px', // Standard A4 height
+        width: '794px',
+        minHeight: '1123px',
         boxSizing: 'border-box',
         backgroundColor: '#FFFFFF',
         color: primaryColor,
