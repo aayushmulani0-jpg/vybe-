@@ -1,10 +1,19 @@
 import { Link } from 'react-router-dom';
 import { FiInstagram, FiTwitter, FiFacebook } from 'react-icons/fi';
+import { motion } from 'framer-motion';
 
 export default function Footer() {
   return (
-    <footer className="bg-neutral-900 pt-16 pb-8 border-t border-white/10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <footer className="bg-neutral-900 pt-16 pb-8 border-t border-white/10 relative overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/20 via-neutral-900 to-neutral-900 pointer-events-none"></div>
+      
+      <motion.div 
+        initial={{ opacity: 0, y: 50 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.2 }}
+        transition={{ duration: 0.8 }}
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10"
+      >
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
           {/* Brand Info */}
           <div className="col-span-1 md:col-span-1">
@@ -65,7 +74,7 @@ export default function Footer() {
             <a href="#" className="hover:text-secondary transition-colors">Terms of Service</a>
           </div>
         </div>
-      </div>
+      </motion.div>
     </footer>
   );
 }

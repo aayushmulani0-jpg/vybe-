@@ -28,8 +28,10 @@ export default function AlertModal({ alertModal, onClose }) {
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="relative w-full max-w-sm bg-neutral-900 border border-white/10 rounded-xl shadow-2xl p-6 text-center"
+          className="relative w-full max-w-sm glass-card shadow-2xl p-6 text-center overflow-hidden"
         >
+          {/* Decorative subtle orb */}
+          <div className="absolute -top-12 -left-12 w-24 h-24 bg-accent/20 rounded-full blur-2xl pointer-events-none" />
           <div className="flex justify-center mb-4">
             {icons[type]}
           </div>
@@ -44,7 +46,7 @@ export default function AlertModal({ alertModal, onClose }) {
             {message}
           </p>
           
-          <Button variant="primary" fullWidth onClick={onClose}>
+          <Button variant="accent" className="w-full" onClick={onClose}>
             Okay
           </Button>
         </motion.div>

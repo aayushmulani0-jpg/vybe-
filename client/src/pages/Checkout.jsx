@@ -6,6 +6,7 @@ import { useCartStore } from '../store/useCartStore';
 import { API_URL } from '../config';
 import Button from '../components/ui/Button';
 import { useUIStore } from '../store/useUIStore';
+import AnimatedSection from '../components/ui/AnimatedSection';
 
 export default function Checkout() {
   const user = useAuthStore(state => state.user);
@@ -248,13 +249,14 @@ export default function Checkout() {
   });
 
   return (
-    <div className="min-h-screen pt-32 pb-12 px-4 sm:px-6 bg-primary">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12">
+    <div className="min-h-screen pt-32 pb-12 px-4 sm:px-6 bg-primary relative overflow-hidden">
+      <div className="gradient-orb gradient-orb-accent w-[300px] h-[300px] -top-20 -right-20 animate-float" />
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 relative z-10">
         {/* Left Column: Shipping details */}
-        <div>
+        <AnimatedSection direction="left">
           <h2 className="text-3xl font-heading font-bold text-secondary uppercase tracking-wider mb-8">Checkout</h2>
           
-          <div className="bg-neutral-900 rounded-xl p-6 border border-white/10 mb-6">
+          <div className="glass-card p-6 mb-6">
             <h3 className="text-xl font-semibold text-white mb-4">Contact Information</h3>
             <div className="mb-6">
               <label className="block text-gray-400 text-sm mb-2">Phone Number</label>
@@ -330,11 +332,11 @@ export default function Checkout() {
               </motion.form>
             )}
           </div>
-        </div>
+        </AnimatedSection>
 
         {/* Right Column: Order Summary */}
-        <div>
-          <div className="bg-neutral-900 rounded-xl p-6 border border-white/10 sticky top-32">
+        <AnimatedSection direction="right" delay={0.15}>
+          <div className="glass-card p-6 sticky top-32">
             <h3 className="text-xl font-semibold text-white mb-6">Order Summary</h3>
             
             <div className="space-y-4 mb-6 max-h-[40vh] overflow-y-auto custom-scrollbar pr-2">
@@ -387,7 +389,7 @@ export default function Checkout() {
               {isPlacingOrder ? 'Processing...' : 'Place Order'}
             </Button>
           </div>
-        </div>
+        </AnimatedSection>
       </div>
     </div>
   );

@@ -55,8 +55,20 @@ export default function Login() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
+        <motion.form 
+          onSubmit={handleSubmit} 
+          className="space-y-5"
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: { opacity: 0 },
+            visible: {
+              opacity: 1,
+              transition: { staggerChildren: 0.1, delayChildren: 0.2 }
+            }
+          }}
+        >
+          <motion.div variants={{ hidden: { opacity: 0, x: -20 }, visible: { opacity: 1, x: 0 } }}>
             <label className="block text-sm font-medium text-gray-300 mb-1">Email Address</label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -71,9 +83,9 @@ export default function Login() {
                 placeholder="you@example.com"
               />
             </div>
-          </div>
+          </motion.div>
 
-          <div>
+          <motion.div variants={{ hidden: { opacity: 0, x: -20 }, visible: { opacity: 1, x: 0 } }}>
             <label className="block text-sm font-medium text-gray-300 mb-1">Password</label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -88,12 +100,14 @@ export default function Login() {
                 placeholder="••••••••"
               />
             </div>
-          </div>
+          </motion.div>
 
-          <Button type="submit" variant="accent" className="w-full py-3 mt-4" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In'}
-          </Button>
-        </form>
+          <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
+            <Button type="submit" variant="accent" className="w-full py-3 mt-4 hover:scale-[1.02] transition-transform" disabled={loading}>
+              {loading ? 'Signing in...' : 'Sign In'}
+            </Button>
+          </motion.div>
+        </motion.form>
 
         <div className="mt-8">
           <div className="relative">

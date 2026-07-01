@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useRef } from 'react';
+import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
 import { FiHeart, FiShoppingBag } from 'react-icons/fi';
 import Button from './Button';
 import { useUIStore } from '../../store/useUIStore';
@@ -7,6 +7,31 @@ import { useUIStore } from '../../store/useUIStore';
 export default function ProductCard({ product, isWholesale = false, onQuickAdd, collectionName }) {
   const [isHovered, setIsHovered] = useState(false);
   const setQuickViewProduct = useUIStore(state => state.setQuickViewProduct);
+  const ref = useRef(null);
+
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const mouseXSpring = useSpring(x, { stiffness: 300, damping: 40 });
+  const mouseYSpring = useSpring(y, { stiffness: 300, damping: 40 });
+  const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["10deg", "-10deg"]);
+  const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-10deg", "10deg"]);
+
+  const handleMouseMove = (e) => {
+    if (!ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    x.set(mouseX / width - 0.5);
+    y.set(mouseY / height - 0.5);
+  };
+
+  const handleMouseLeave = () => {
+    x.set(0);
+    y.set(0);
+    setIsHovered(false);
+  };
 
   const handleQuickAdd = (e) => {
     e.preventDefault();
@@ -19,14 +44,20 @@ export default function ProductCard({ product, isWholesale = false, onQuickAdd, 
 
   return (
     <motion.div 
+      ref={ref}
       className="group relative flex flex-col w-full max-w-sm"
-      onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
-      whileHover={{ y: -5 }}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={handleMouseLeave}
+      style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
+      whileHover={{ scale: 1.02 }}
       transition={{ duration: 0.3 }}
     >
       {/* Image Container */}
-      <div className="relative aspect-square overflow-hidden bg-neutral-900 mb-4 flex items-center justify-center p-2">
+      <div 
+        className="relative aspect-square overflow-hidden bg-neutral-900 mb-4 flex items-center justify-center p-2 rounded-xl transition-shadow duration-500 hover:shadow-[0_20px_50px_rgba(163,255,18,0.15)]"
+        style={{ transform: "translateZ(30px)" }}
+      >
         <button 
           onClick={handleQuickAdd}
           className="w-full h-full flex items-center justify-center relative"
@@ -36,8 +67,8 @@ export default function ProductCard({ product, isWholesale = false, onQuickAdd, 
             alt={product.name}
             className={`w-full h-full object-contain drop-shadow-2xl ${product.stockStatus === 'Out of Stock' ? 'opacity-40 grayscale' : ''}`}
             initial={{ scale: 1 }}
-            animate={{ scale: isHovered ? 1.05 : 1 }}
-            transition={{ duration: 0.5 }}
+            animate={{ scale: isHovered ? 1.1 : 1 }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           />
           {product.stockStatus === 'Out of Stock' && (
             <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">

@@ -39,8 +39,10 @@ export default function ConfirmModal({ confirmModal, onClose }) {
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="relative w-full max-w-sm bg-neutral-900 border border-white/10 rounded-xl shadow-2xl p-6 text-center"
+          className="relative w-full max-w-sm glass-card shadow-2xl p-6 text-center overflow-hidden"
         >
+          {/* Decorative subtle orb */}
+          <div className="absolute -top-12 -left-12 w-24 h-24 bg-accent/20 rounded-full blur-2xl pointer-events-none" />
           <div className="flex justify-center mb-4 text-accent">
             <FiAlertTriangle className="w-8 h-8" />
           </div>
@@ -54,10 +56,10 @@ export default function ConfirmModal({ confirmModal, onClose }) {
           </p>
           
           <div className="flex gap-3">
-            <Button variant="outline" fullWidth onClick={handleCancel}>
+            <Button variant="outline" className="w-full" onClick={handleCancel}>
               {cancelText}
             </Button>
-            <Button variant="primary" fullWidth onClick={handleConfirm}>
+            <Button variant="accent" className="w-full animate-pulse-glow" onClick={handleConfirm}>
               {confirmText}
             </Button>
           </div>

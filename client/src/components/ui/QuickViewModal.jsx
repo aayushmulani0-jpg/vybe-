@@ -61,7 +61,13 @@ export default function QuickViewModal({ product, isOpen, onClose }) {
             </button>
 
             {/* Left: Images */}
-            <div className="w-full md:w-1/2 bg-neutral-950 p-6 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-white/10 shrink-0">
+            <motion.div 
+              variants={{ hidden: { opacity: 0, x: -20 }, visible: { opacity: 1, x: 0 } }}
+              initial="hidden"
+              animate="visible"
+              transition={{ delay: 0.1 }}
+              className="w-full md:w-1/2 bg-neutral-950 p-6 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-white/10 shrink-0"
+            >
               <div className="aspect-square w-full max-w-md relative flex items-center justify-center mb-4">
                 <img 
                   src={activeImage} 
@@ -83,130 +89,146 @@ export default function QuickViewModal({ product, isOpen, onClose }) {
                   ))}
                 </div>
               )}
-            </div>
+            </motion.div>
 
             {/* Right: Info */}
             <div className="w-full md:w-1/2 flex flex-col flex-1 min-h-0">
-              <div className="p-6 md:p-8 flex-1 overflow-y-auto min-h-0">
+              <motion.div 
+                variants={{
+                  hidden: { opacity: 0 },
+                  visible: { opacity: 1, transition: { staggerChildren: 0.05, delayChildren: 0.2 } }
+                }}
+                initial="hidden"
+                animate="visible"
+                className="p-6 md:p-8 flex-1 overflow-y-auto min-h-0 custom-scrollbar"
+              >
+              <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}>
                 <h2 className="text-3xl font-heading font-bold text-secondary uppercase tracking-wider mb-2">
-                {product.name}
-              </h2>
-              
-              <div className="flex items-center gap-3 mb-6">
-                <span className="text-2xl text-secondary font-body font-medium">₹{product.price}</span>
-                {product.comparePrice && product.comparePrice > product.price && (
-                  <>
-                    <span className="text-gray-500 font-body line-through">₹{product.comparePrice}</span>
-                    <span className="bg-accent text-primary text-xs font-bold px-2 py-1 uppercase tracking-wider">
-                      {Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100)}% OFF
-                    </span>
-                  </>
+                  {product.name}
+                </h2>
+                
+                <div className="flex items-center gap-3 mb-6">
+                  <span className="text-2xl text-secondary font-body font-medium">₹{product.price}</span>
+                  {product.comparePrice && product.comparePrice > product.price && (
+                    <>
+                      <span className="text-gray-500 font-body line-through">₹{product.comparePrice}</span>
+                      <span className="bg-accent text-primary text-xs font-bold px-2 py-1 uppercase tracking-wider">
+                        {Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100)}% OFF
+                      </span>
+                    </>
+                  )}
+                </div>
+
+                {product.description && (
+                  <p className="text-gray-400 font-body text-sm mb-6 leading-relaxed">
+                    {product.description}
+                  </p>
                 )}
-              </div>
+              </motion.div>
 
-              {product.description && (
-                <p className="text-gray-400 font-body text-sm mb-6 leading-relaxed">
-                  {product.description}
-                </p>
-              )}
+              <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}>
+                {/* Colors */}
+                {product.colors && product.colors.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-sm font-heading font-semibold text-secondary uppercase tracking-wider mb-3">Color</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {product.colors.map(color => {
+                        const isOOS = product.stockStatus === 'Out of Stock' || product.outOfStockColors?.includes(color);
+                        return (
+                          <button
+                            key={color}
+                            onClick={() => !isOOS && setSelectedColor(color)}
+                            disabled={isOOS}
+                            className={`w-10 h-10 rounded-full border-2 transition-all flex items-center justify-center relative ${
+                              selectedColor === color 
+                                ? 'border-accent scale-110' 
+                                : 'border-white/20 hover:border-white/50'
+                            } ${isOOS ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            style={{ backgroundColor: color }}
+                            title={color + (isOOS ? ' (Out of Stock)' : '')}
+                          >
+                            {selectedColor === color && !isOOS && (
+                              <FiCheck className={['#ffffff', '#fff', 'white'].includes(color.toLowerCase()) ? 'text-black' : 'text-white'} />
+                            )}
+                            {isOOS && (
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="w-10 h-0.5 bg-accent rotate-45 absolute shadow-sm"></div>
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </motion.div>
 
-              {/* Colors */}
-              {product.colors && product.colors.length > 0 && (
+              <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}>
+                {/* Sizes */}
+                {product.sizes && product.sizes.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-sm font-heading font-semibold text-secondary uppercase tracking-wider mb-3">Size</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {product.sizes.map(size => {
+                        const isOOS = product.stockStatus === 'Out of Stock' || product.outOfStockSizes?.includes(size);
+                        return (
+                          <button
+                            key={size}
+                            onClick={() => !isOOS && setSelectedSize(size)}
+                            disabled={isOOS}
+                            className={`px-4 py-2 border transition-colors font-body text-sm relative overflow-hidden ${
+                              selectedSize === size 
+                                ? 'border-accent bg-accent text-primary font-medium' 
+                                : isOOS 
+                                  ? 'border-white/10 text-gray-500 bg-white/5 cursor-not-allowed'
+                                  : 'border-white/20 text-gray-300 hover:border-white/50 bg-transparent'
+                            }`}
+                            title={isOOS ? 'Out of Stock' : ''}
+                          >
+                            {size}
+                            {isOOS && (
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="w-full h-px bg-accent/70 rotate-12 absolute"></div>
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+
+              <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}>
+                {/* Quantity */}
                 <div className="mb-6">
-                  <h3 className="text-sm font-heading font-semibold text-secondary uppercase tracking-wider mb-3">Color</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {product.colors.map(color => {
-                      const isOOS = product.stockStatus === 'Out of Stock' || product.outOfStockColors?.includes(color);
-                      return (
-                        <button
-                          key={color}
-                          onClick={() => !isOOS && setSelectedColor(color)}
-                          disabled={isOOS}
-                          className={`w-10 h-10 rounded-full border-2 transition-all flex items-center justify-center relative ${
-                            selectedColor === color 
-                              ? 'border-accent scale-110' 
-                              : 'border-white/20 hover:border-white/50'
-                          } ${isOOS ? 'opacity-50 cursor-not-allowed' : ''}`}
-                          style={{ backgroundColor: color }}
-                          title={color + (isOOS ? ' (Out of Stock)' : '')}
-                        >
-                          {selectedColor === color && !isOOS && (
-                            <FiCheck className={['#ffffff', '#fff', 'white'].includes(color.toLowerCase()) ? 'text-black' : 'text-white'} />
-                          )}
-                          {isOOS && (
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <div className="w-10 h-0.5 bg-accent rotate-45 absolute shadow-sm"></div>
-                            </div>
-                          )}
-                        </button>
-                      );
-                    })}
+                  <h3 className="text-sm font-heading font-semibold text-secondary uppercase tracking-wider mb-3">Quantity</h3>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center border border-white/20 rounded-md overflow-hidden bg-neutral-900">
+                      <button 
+                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                        className="p-3 text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                      >
+                        <FiMinus />
+                      </button>
+                      <input 
+                        type="number"
+                        value={quantity}
+                        readOnly
+                        className="w-12 text-center bg-transparent text-white font-medium outline-none"
+                      />
+                      <button 
+                        onClick={() => setQuantity(quantity + 1)}
+                        className="p-3 text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                      >
+                        <FiPlus />
+                      </button>
+                    </div>
                   </div>
                 </div>
-              )}
+              </motion.div>
 
-              {/* Sizes */}
-              {product.sizes && product.sizes.length > 0 && (
-                <div className="mb-6">
-                  <h3 className="text-sm font-heading font-semibold text-secondary uppercase tracking-wider mb-3">Size</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {product.sizes.map(size => {
-                      const isOOS = product.stockStatus === 'Out of Stock' || product.outOfStockSizes?.includes(size);
-                      return (
-                        <button
-                          key={size}
-                          onClick={() => !isOOS && setSelectedSize(size)}
-                          disabled={isOOS}
-                          className={`px-4 py-2 border transition-colors font-body text-sm relative overflow-hidden ${
-                            selectedSize === size 
-                              ? 'border-accent bg-accent text-primary font-medium' 
-                              : isOOS 
-                                ? 'border-white/10 text-gray-500 bg-white/5 cursor-not-allowed'
-                                : 'border-white/20 text-gray-300 hover:border-white/50 bg-transparent'
-                          }`}
-                          title={isOOS ? 'Out of Stock' : ''}
-                        >
-                          {size}
-                          {isOOS && (
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <div className="w-full h-px bg-accent/70 rotate-12 absolute"></div>
-                            </div>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Quantity */}
-              <div className="mb-6">
-                <h3 className="text-sm font-heading font-semibold text-secondary uppercase tracking-wider mb-3">Quantity</h3>
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center border border-white/20 rounded-md overflow-hidden bg-neutral-900">
-                    <button 
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="p-3 text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
-                    >
-                      <FiMinus />
-                    </button>
-                    <input 
-                      type="number"
-                      value={quantity}
-                      readOnly
-                      className="w-12 text-center bg-transparent text-white font-medium outline-none"
-                    />
-                    <button 
-                      onClick={() => setQuantity(quantity + 1)}
-                      className="p-3 text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
-                    >
-                      <FiPlus />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-3 mt-8">
+              <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }} className="flex gap-3 mt-auto pt-6">
                 <Button 
                   variant={product.stockStatus === 'Out of Stock' ? 'outline' : 'accent'}
                   className={`w-full flex justify-center items-center gap-2 ${product.stockStatus === 'Out of Stock' ? 'opacity-50 cursor-not-allowed border-accent/50 text-accent hover:bg-transparent hover:text-accent' : ''}`}
@@ -215,8 +237,8 @@ export default function QuickViewModal({ product, isOpen, onClose }) {
                 >
                   <FiShoppingBag /> {product.stockStatus === 'Out of Stock' ? 'Out of Stock' : 'Add to Cart'}
                 </Button>
-              </div>
-            </div>
+              </motion.div>
+              </motion.div>
 
               {/* Fixed Bottom Action */}
               <div className="p-6 md:px-8 md:py-6 border-t border-white/10 bg-neutral-900 shrink-0 mt-auto">

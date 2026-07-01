@@ -1,18 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { FiUploadCloud, FiTrash2, FiCheck, FiMinus, FiPlus, FiShoppingBag, FiZap } from 'react-icons/fi';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FiUploadCloud, FiTrash2, FiCheck, FiMinus, FiPlus, FiShoppingBag, FiZap, FiMove, FiMaximize2 } from 'react-icons/fi';
 import Button from '../components/ui/Button';
 import { API_URL } from '../config';
 import { useCartStore } from '../store/useCartStore';
-
 import { useUIStore } from '../store/useUIStore';
+import AnimatedSection from '../components/ui/AnimatedSection';
+import DesignCanvas from '../components/ui/DesignCanvas';
 
 // Mock T-Shirt Image URL (Plain Black)
-const TSHIRT_MOCKUP = "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&q=80&w=800"; // Black oversized blank
-
-// Will be fetched from backend dynamically
-
-// Print zones are now fetched dynamically from the backend
+const TSHIRT_MOCKUP = "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&q=80&w=800";
 
 const CATEGORIES = [
   { name: 'Oversized T-Shirts (220 GSM)', baseCost: 0 },
@@ -39,12 +37,12 @@ export default function CustomOrder() {
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [activeCombo, setActiveCombo] = useState(null);
+  const [designTransforms, setDesignTransforms] = useState({});
 
   const [printStyles, setPrintStyles] = useState([]);
   const [templates, setTemplates] = useState([]);
   const [colors, setColors] = useState([]);
   const [loading, setLoading] = useState(true);
-
 
   const [customPrintNotice, setCustomPrintNotice] = useState('');
 
@@ -105,7 +103,6 @@ export default function CustomOrder() {
     setSelectedPrints(prev => {
       const isSelected = prev.find(p => p._id === style._id);
       if (isSelected) {
-        // If removing, also remove the uploaded image for this zone
         setUploadedImages(imgs => {
           const newImgs = { ...imgs };
           delete newImgs[style.name];
@@ -115,6 +112,11 @@ export default function CustomOrder() {
           const newRaws = { ...raws };
           delete newRaws[style.name];
           return newRaws;
+        });
+        setDesignTransforms(prev => {
+          const n = { ...prev };
+          delete n[style.name];
+          return n;
         });
         if (activeZone === style.name) setActiveZone(null);
         return prev.filter(p => p._id !== style._id);
@@ -197,6 +199,7 @@ export default function CustomOrder() {
         printingInstructions: printingInstructions,
         selectedPrints: selectedPrints,
         uploadedImages: finalImages,
+        designTransforms: designTransforms,
         orderType: 'CustomPrint'
       });
       alert('Added custom design to cart!', 'success', 'Success');
@@ -243,6 +246,11 @@ export default function CustomOrder() {
       ...prev,
       [activeZone]: file
     }));
+    // Initialize centered transform
+    setDesignTransforms(prev => ({
+      ...prev,
+      [activeZone]: { x: 50, y: 50, scale: 1 }
+    }));
   };
 
   const removeImage = (zone) => {
@@ -256,353 +264,396 @@ export default function CustomOrder() {
       delete newMap[zone];
       return newMap;
     });
+    setDesignTransforms(prev => {
+      const n = { ...prev };
+      delete n[zone];
+      return n;
+    });
   };
 
+  const handleTransformChange = (zone, transform) => {
+    setDesignTransforms(prev => ({
+      ...prev,
+      [zone]: transform
+    }));
+  };
+
+  const activePrintZones = printStyles
+    .filter(s => s.isActive && selectedPrints.some(p => p.name === s.name))
+    .map(s => ({ name: s.name, boundingBox: s.boundingBox }));
+
   return (
-    <div className="min-h-screen pt-24 pb-20 bg-primary">
+    <div className="min-h-screen pt-24 pb-20 bg-primary relative overflow-hidden">
+      {/* Decorative orbs */}
+      <div className="gradient-orb gradient-orb-accent w-[500px] h-[500px] -top-40 -right-40 animate-float" />
+      <div className="gradient-orb gradient-orb-blue w-[400px] h-[400px] top-1/2 -left-40 animate-float" style={{ animationDelay: '3s' }} />
+
       {loading ? (
-        <div className="flex items-center justify-center min-h-[60vh] text-gray-400">Loading print templates...</div>
-      ) : (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
-          <div className="mb-8">
-            <h1 className="text-4xl md:text-6xl font-heading font-bold text-secondary uppercase tracking-tighter mb-4">
-              Upload <span className="text-accent italic">Design</span>
-            </h1>
-            <p className="text-gray-400 font-body">Visualize your custom print on our premium 220 GSM blanks.</p>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-12 h-12 border-2 border-accent/30 border-t-accent rounded-full animate-spin" />
+            <span className="text-gray-400 font-body uppercase tracking-wider text-sm">Loading print templates...</span>
           </div>
+        </div>
+      ) : (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24">
-
-            {/* Mockup Preview Side */}
-            <div className="relative bg-neutral-900 rounded-lg p-8 flex items-start pt-12 justify-center min-h-[600px] border border-white/5 overflow-hidden">
-              <div className="relative w-full max-w-md pointer-events-none">
-                <img
-                  src={TSHIRT_MOCKUP}
-                  alt="Black Blank T-Shirt"
-                  className="w-full h-auto drop-shadow-2xl opacity-90"
-                />
-
-                {/* Overlay Zones */}
-                {printStyles.map(activeStyle => {
-                  if (!activeStyle.isActive) return null;
-
-                  const isSelectedPrint = selectedPrints.some(p => p.name === activeStyle.name);
-                  if (!isSelectedPrint) return null; // Only show selected print areas
-
-                  const hasImage = !!uploadedImages[activeStyle.name];
-                  const isActive = activeZone === activeStyle.name;
-
-                  const bounds = activeStyle.boundingBox || { top: 30, left: 40, width: 20, height: 20 };
-
-                  return (
-                    <div
-                      key={activeStyle.name}
-                      style={{
-                        position: 'absolute',
-                        top: `${bounds.top}%`,
-                        left: `${bounds.left}%`,
-                        width: `${bounds.width}%`,
-                        height: `${bounds.height}%`,
-                      }}
-                      className={`border-2 border-dashed flex items-center justify-center overflow-hidden transition-all duration-300 pointer-events-auto cursor-pointer ${isActive ? 'border-accent bg-accent/10 z-20' : 'border-white/20 hover:border-white/50 z-10'
-                        }`}
-                      onClick={() => setActiveZone(activeStyle.name)}
-                    >
-                      {hasImage ? (
-                        <img src={uploadedImages[activeStyle.name]} alt="Uploaded Design" className="w-full h-full object-contain pointer-events-none" />
-                      ) : (
-                        <span className={`text-[10px] uppercase font-bold text-center p-1 pointer-events-none ${isActive ? 'text-accent' : 'text-gray-500'}`}>
-                          {activeStyle.name}
-                        </span>
-                      )}
-                    </div>
-                  );
-                })}
+          {/* Hero Header */}
+          <AnimatedSection className="mb-12">
+            <div className="text-center lg:text-left">
+              <h1 className="text-5xl md:text-7xl font-heading font-bold text-secondary uppercase tracking-tighter mb-4">
+                Design <span className="text-gradient-accent italic">Studio</span>
+              </h1>
+              <p className="text-gray-400 font-body text-lg max-w-2xl">
+                Upload your artwork, position it precisely on our premium blanks, and see exactly what you'll get.
+              </p>
+              <div className="flex gap-4 mt-4 text-xs text-gray-500 font-body uppercase tracking-wider">
+                <span className="flex items-center gap-1.5"><FiMove className="text-accent" /> Drag to position</span>
+                <span className="flex items-center gap-1.5"><FiMaximize2 className="text-accent" /> Resize with handles</span>
               </div>
             </div>
+          </AnimatedSection>
 
-            {/* Upload Controls Side */}
-            <div className="flex flex-col justify-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
 
-              {/* Template / Print Style Checkboxes */}
-              <div className="mb-8 bg-neutral-900/50 p-6 rounded-lg border border-white/5">
-                <label className="block text-secondary font-heading font-semibold uppercase tracking-wider mb-4">
-                  Selected Print Areas (Templates)
-                </label>
-
-                {/* Quick Combos */}
-                {templates.length > 0 && (
-                  <div className="mb-6">
-                    <p className="text-gray-500 text-xs font-body uppercase tracking-wider mb-3">Quick Combos</p>
-                    <div className="flex flex-wrap gap-2">
-                      {templates.map(combo => (
-                        <button
-                          key={combo._id}
-                          onClick={() => {
-                            if (activeCombo && activeCombo._id === combo._id) {
-                              setSelectedPrints([]);
-                              setActiveCombo(null);
-                            } else {
-                              const comboPrints = (combo.printAreas || [])
-                                .map(p => printStyles.find(style => style.name === p.name))
-                                .filter(Boolean);
-                              setSelectedPrints(comboPrints);
-                              setActiveCombo(combo);
-                            }
-                          }}
-                          className={`flex items-center gap-2 px-3 py-2 border rounded-sm text-sm font-body transition-colors group ${activeCombo && activeCombo._id === combo._id
-                            ? 'border-accent bg-accent/10 text-accent'
-                            : 'border-white/10 text-gray-300 hover:border-accent hover:text-accent'
-                            }`}
-                        >
-                          <FiZap className="w-3 h-3 text-accent/60 group-hover:text-accent" />
-                          <span>{combo.name}</span>
-                          {combo.isRecommended && (
-                            <span className="text-[10px] px-1.5 py-0.5 bg-accent/15 text-accent rounded-sm">Recommended</span>
-                          )}
-                          {combo.isPopular && (
-                            <span className="text-[10px] px-1.5 py-0.5 bg-accent/15 text-accent rounded-sm">Popular</span>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-                  {printStyles.map(style => (
-                    <label key={style._id} className={`flex items-center p-3 border rounded-sm transition-colors bg-primary/50 ${style.isActive ? 'border-white/10 cursor-pointer hover:border-accent' : 'border-red-500/20 opacity-50 cursor-not-allowed'}`}>
-                      <input
-                        type="checkbox"
-                        className="accent-accent w-4 h-4 mr-3 shrink-0"
-                        checked={!!selectedPrints.find(p => p._id === style._id)}
-                        onChange={() => style.isActive && togglePrint(style)}
-                        disabled={!style.isActive}
-                      />
-                      <div className="flex flex-col">
-                        <span className="text-gray-300 font-body text-sm">
-                          {style.name}
-                          {!style.isActive && <span className="text-red-400 text-xs ml-2 font-bold">(Not Available)</span>}
-                        </span>
-                        {style.isActive && <span className="text-accent text-xs mt-1">+₹{style.cost}</span>}
-                      </div>
-                    </label>
-                  ))}
+            {/* ── Left: Interactive Mockup Preview ── */}
+            <AnimatedSection direction="left" delay={0.1}>
+              <div className="sticky top-28">
+                <div className="glass-card p-6 md:p-8">
+                  <DesignCanvas
+                    mockupImage={TSHIRT_MOCKUP}
+                    printZones={activePrintZones}
+                    uploadedImages={uploadedImages}
+                    designTransforms={designTransforms}
+                    onTransformChange={handleTransformChange}
+                    activeZone={activeZone}
+                    onZoneClick={setActiveZone}
+                    selectedColorHex={selectedColor?.hex}
+                  />
                 </div>
-
-                {selectedPrints.length > 0 && (
-                  <>
-                    <label className="block text-secondary font-heading font-semibold uppercase tracking-wider mb-4">
-                      Uploading Design For:
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedPrints.map(p => p.name).map(zone => (
-                        <button
-                          key={zone}
-                          type="button"
-                          onClick={() => setActiveZone(zone)}
-                          className={`px-4 py-2 text-sm font-body border transition-colors flex items-center gap-2 ${activeZone === zone
-                            ? 'border-accent bg-accent text-primary font-bold'
-                            : 'border-white/20 text-gray-400 hover:border-white/50'
-                            }`}
-                        >
-                          {zone}
-                          {uploadedImages[zone] && <FiCheck className={activeZone === zone ? 'text-primary' : 'text-accent'} />}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-
-                {customPrintNotice && (
-                  <div className="mt-6 bg-accent/10 border border-accent/20 p-4 rounded-lg">
-                    <p className="text-accent text-sm font-medium">{customPrintNotice}</p>
-                  </div>
-                )}
               </div>
+            </AnimatedSection>
 
-              {/* Drag & Drop Area */}
-              {activeZone ? (
-                <div
-                  className={`border-2 border-dashed rounded-lg p-12 text-center transition-all duration-300 mb-8 ${isDragging
-                    ? 'border-accent bg-accent/5'
-                    : 'border-white/20 bg-neutral-900/50 hover:border-white/40'
-                    }`}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                >
-                  {uploadedImages[activeZone] ? (
-                    <div className="flex flex-col items-center">
-                      <div className="w-32 h-32 mb-6 bg-black/50 p-2 rounded border border-white/10">
-                        <img src={uploadedImages[activeZone]} alt="Preview" className="w-full h-full object-contain" />
+            {/* ── Right: Controls ── */}
+            <div className="flex flex-col gap-8">
+
+              {/* Print Area Selection */}
+              <AnimatedSection direction="right" delay={0.15}>
+                <div className="glass-card p-6">
+                  <h3 className="text-secondary font-heading font-semibold uppercase tracking-wider mb-5 flex items-center gap-2">
+                    <span className="w-6 h-6 bg-accent/20 rounded-full flex items-center justify-center text-accent text-xs font-bold">1</span>
+                    Select Print Areas
+                  </h3>
+
+                  {/* Quick Combos */}
+                  {templates.length > 0 && (
+                    <div className="mb-6">
+                      <p className="text-gray-500 text-xs font-body uppercase tracking-wider mb-3">Quick Combos</p>
+                      <div className="flex flex-wrap gap-2">
+                        {templates.map(combo => (
+                          <motion.button
+                            key={combo._id}
+                            whileHover={{ scale: 1.03 }}
+                            whileTap={{ scale: 0.97 }}
+                            onClick={() => {
+                              if (activeCombo && activeCombo._id === combo._id) {
+                                setSelectedPrints([]);
+                                setActiveCombo(null);
+                              } else {
+                                const comboPrints = (combo.printAreas || [])
+                                  .map(p => printStyles.find(style => style.name === p.name))
+                                  .filter(Boolean);
+                                setSelectedPrints(comboPrints);
+                                setActiveCombo(combo);
+                              }
+                            }}
+                            className={`flex items-center gap-2 px-3 py-2 border rounded-lg text-sm font-body transition-colors group ${activeCombo && activeCombo._id === combo._id
+                              ? 'border-accent bg-accent/10 text-accent shadow-[0_0_15px_rgba(163,255,18,0.15)]'
+                              : 'border-white/10 text-gray-300 hover:border-accent/50 hover:text-accent'
+                              }`}
+                          >
+                            <FiZap className="w-3 h-3 text-accent/60 group-hover:text-accent" />
+                            <span>{combo.name}</span>
+                            {combo.isRecommended && (
+                              <span className="text-[10px] px-1.5 py-0.5 bg-accent/15 text-accent rounded-sm">Recommended</span>
+                            )}
+                            {combo.isPopular && (
+                              <span className="text-[10px] px-1.5 py-0.5 bg-accent/15 text-accent rounded-sm">Popular</span>
+                            )}
+                          </motion.button>
+                        ))}
                       </div>
-                      <div className="flex gap-4">
-                        <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                          Change File
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => removeImage(activeZone)} className="border-red-500/50 text-red-500 hover:bg-red-500/10 hover:border-red-500">
-                          <FiTrash2 /> Remove
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center">
-                      <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center mb-4 text-accent">
-                        <FiUploadCloud className="w-8 h-8" />
-                      </div>
-                      <h3 className="text-xl font-heading text-secondary mb-2">Drag & Drop your design</h3>
-                      <p className="text-gray-400 font-body text-sm mb-6">Uploading for <strong>{activeZone}</strong></p>
-                      <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
-                        Browse Files
-                      </Button>
                     </div>
                   )}
 
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileInput}
-                    accept="image/png, image/jpeg, image/svg+xml"
-                    className="hidden"
-                  />
-                </div>
-              ) : (
-                <div className="border-2 border-dashed border-white/10 rounded-lg p-12 text-center mb-8 bg-neutral-900/50">
-                  <p className="text-gray-500 font-body">Please select a print area template above to upload a design.</p>
-                </div>
-              )}
-
-              {/* Summary & Next Steps */}
-              <div className="bg-neutral-900 p-6 rounded-lg border border-white/5">
-                <div className="mb-6 pb-6 border-b border-white/10">
-                  <h3 className="text-secondary font-heading uppercase tracking-wider mb-4">
-                    Size
-                  </h3>
-                  <div className="flex flex-wrap gap-2 mb-6">
-                    {['S', 'M', 'L', 'XL'].map(size => (
-                      <button
-                        key={size}
-                        onClick={() => setSelectedSize(size)}
-                        className={`w-12 h-10 border rounded font-bold transition-colors ${selectedSize === size
-                          ? 'border-accent bg-accent/20 text-accent'
-                          : 'border-white/10 text-gray-400 hover:border-accent hover:text-accent'
-                          }`}
-                      >
-                        {size}
-                      </button>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                    {printStyles.map(style => (
+                      <label key={style._id} className={`flex items-center p-3 border rounded-lg transition-all ${style.isActive ? 'border-white/10 cursor-pointer hover:border-accent/50 hover:bg-accent/5' : 'border-red-500/20 opacity-50 cursor-not-allowed'}`}>
+                        <input
+                          type="checkbox"
+                          className="accent-accent w-4 h-4 mr-3 shrink-0"
+                          checked={!!selectedPrints.find(p => p._id === style._id)}
+                          onChange={() => style.isActive && togglePrint(style)}
+                          disabled={!style.isActive}
+                        />
+                        <div className="flex flex-col">
+                          <span className="text-gray-300 font-body text-sm">
+                            {style.name}
+                            {!style.isActive && <span className="text-red-400 text-xs ml-2 font-bold">(Not Available)</span>}
+                          </span>
+                          {style.isActive && <span className="text-accent text-xs mt-0.5">+₹{style.cost}</span>}
+                        </div>
+                      </label>
                     ))}
                   </div>
 
+                  {/* Zone tabs */}
+                  <AnimatePresence>
+                    {selectedPrints.length > 0 && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                      >
+                        <h4 className="text-secondary font-heading font-semibold uppercase tracking-wider mb-3 text-sm">
+                          Upload Design For:
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedPrints.map(p => p.name).map(zone => (
+                            <motion.button
+                              key={zone}
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              type="button"
+                              onClick={() => setActiveZone(zone)}
+                              className={`px-4 py-2 text-sm font-body border rounded-lg transition-all flex items-center gap-2 ${activeZone === zone
+                                ? 'border-accent bg-accent text-primary font-bold shadow-[0_0_20px_rgba(163,255,18,0.2)]'
+                                : 'border-white/20 text-gray-400 hover:border-white/50'
+                                }`}
+                            >
+                              {zone}
+                              {uploadedImages[zone] && <FiCheck className={activeZone === zone ? 'text-primary' : 'text-accent'} />}
+                            </motion.button>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {customPrintNotice && (
+                    <div className="mt-6 bg-accent/10 border border-accent/20 p-4 rounded-lg">
+                      <p className="text-accent text-sm font-medium">{customPrintNotice}</p>
+                    </div>
+                  )}
+                </div>
+              </AnimatedSection>
+
+              {/* Upload Area */}
+              <AnimatedSection direction="right" delay={0.2}>
+                <div className="glass-card p-6">
+                  <h3 className="text-secondary font-heading font-semibold uppercase tracking-wider mb-5 flex items-center gap-2">
+                    <span className="w-6 h-6 bg-accent/20 rounded-full flex items-center justify-center text-accent text-xs font-bold">2</span>
+                    Upload Artwork
+                  </h3>
+
+                  {activeZone ? (
+                    <div
+                      className={`border-2 border-dashed rounded-xl p-10 text-center transition-all duration-300 ${isDragging
+                        ? 'border-accent bg-accent/5 shadow-[0_0_30px_rgba(163,255,18,0.1)]'
+                        : 'border-white/15 bg-white/[0.02] hover:border-white/30'
+                        }`}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                    >
+                      {uploadedImages[activeZone] ? (
+                        <div className="flex flex-col items-center">
+                          <div className="w-28 h-28 mb-5 bg-black/50 p-2 rounded-xl border border-white/10 overflow-hidden">
+                            <img src={uploadedImages[activeZone]} alt="Preview" className="w-full h-full object-contain" />
+                          </div>
+                          <p className="text-accent text-xs mb-4 font-body">Drag your design on the mockup to reposition it</p>
+                          <div className="flex gap-3">
+                            <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                              Change File
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => removeImage(activeZone)} className="border-red-500/50 text-red-500 hover:bg-red-500/10 hover:border-red-500">
+                              <FiTrash2 /> Remove
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center">
+                          <motion.div
+                            animate={{ y: [0, -8, 0] }}
+                            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                            className="w-16 h-16 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center mb-4 text-accent"
+                          >
+                            <FiUploadCloud className="w-8 h-8" />
+                          </motion.div>
+                          <h4 className="text-lg font-heading text-secondary mb-1">Drag & Drop your design</h4>
+                          <p className="text-gray-500 font-body text-sm mb-5">Uploading for <strong className="text-accent">{activeZone}</strong></p>
+                          <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+                            Browse Files
+                          </Button>
+                        </div>
+                      )}
+
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileInput}
+                        accept="image/png, image/jpeg, image/svg+xml"
+                        className="hidden"
+                      />
+                    </div>
+                  ) : (
+                    <div className="border-2 border-dashed border-white/10 rounded-xl p-10 text-center bg-white/[0.01]">
+                      <p className="text-gray-500 font-body">Select a print area above to upload a design.</p>
+                    </div>
+                  )}
+                </div>
+              </AnimatedSection>
+
+              {/* Options & Summary */}
+              <AnimatedSection direction="right" delay={0.25}>
+                <div className="glass-card p-6">
+                  <h3 className="text-secondary font-heading font-semibold uppercase tracking-wider mb-5 flex items-center gap-2">
+                    <span className="w-6 h-6 bg-accent/20 rounded-full flex items-center justify-center text-accent text-xs font-bold">3</span>
+                    Options & Summary
+                  </h3>
+
+                  {/* Size */}
+                  <div className="mb-6">
+                    <h4 className="text-gray-400 font-body text-xs uppercase tracking-wider mb-3">Size</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {['S', 'M', 'L', 'XL'].map(size => (
+                        <motion.button
+                          key={size}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => setSelectedSize(size)}
+                          className={`w-12 h-10 border rounded-lg font-bold transition-all ${selectedSize === size
+                            ? 'border-accent bg-accent/20 text-accent shadow-[0_0_12px_rgba(163,255,18,0.2)]'
+                            : 'border-white/10 text-gray-400 hover:border-accent/50 hover:text-accent'
+                            }`}
+                        >
+                          {size}
+                        </motion.button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Color */}
                   {colors.length > 0 && (
-                    <>
-                      <h3 className="text-secondary font-heading uppercase tracking-wider mb-4">
-                        Garment Color
-                      </h3>
-                      <div className="flex flex-wrap gap-3 mb-6">
+                    <div className="mb-6">
+                      <h4 className="text-gray-400 font-body text-xs uppercase tracking-wider mb-3">Garment Color</h4>
+                      <div className="flex flex-wrap gap-3">
                         {colors.map(color => (
-                          <button
+                          <motion.button
                             key={color.name}
+                            whileHover={{ scale: 1.15 }}
+                            whileTap={{ scale: 0.9 }}
                             onClick={() => setSelectedColor(color)}
                             title={color.name}
-                            className={`w-10 h-10 rounded-full border-2 transition-all shadow-lg ${selectedColor?.name === color.name ? 'border-accent scale-110' : 'border-white/20 hover:border-white/50'}`}
+                            className={`w-10 h-10 rounded-full border-2 transition-all shadow-lg ${selectedColor?.name === color.name ? 'border-accent scale-110 shadow-[0_0_15px_rgba(163,255,18,0.3)]' : 'border-white/20 hover:border-white/50'}`}
                             style={{ backgroundColor: color.hex }}
                           />
                         ))}
                       </div>
-                    </>
+                    </div>
                   )}
 
-                  <h3 className="text-secondary font-heading uppercase tracking-wider mb-4">
-                    Quantity
-                  </h3>
-                  <div className="flex items-center border border-white/20 rounded-md overflow-hidden bg-neutral-950 w-fit">
-                    <button
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="p-3 text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
-                    >
-                      <FiMinus />
-                    </button>
-                    <input
-                      type="number"
-                      value={quantity}
-                      readOnly
-                      className="w-16 text-center bg-transparent text-white font-medium outline-none"
+                  {/* Quantity */}
+                  <div className="mb-6">
+                    <h4 className="text-gray-400 font-body text-xs uppercase tracking-wider mb-3">Quantity</h4>
+                    <div className="flex items-center border border-white/15 rounded-lg overflow-hidden bg-white/[0.02] w-fit">
+                      <button
+                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                        className="p-3 text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                      >
+                        <FiMinus />
+                      </button>
+                      <input
+                        type="number"
+                        value={quantity}
+                        readOnly
+                        className="w-16 text-center bg-transparent text-white font-medium outline-none"
+                      />
+                      <button
+                        onClick={() => setQuantity(quantity + 1)}
+                        className="p-3 text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                      >
+                        <FiPlus />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Instructions */}
+                  <div className="mb-6">
+                    <div className="bg-accent/10 border border-accent/20 p-3 rounded-lg mb-4">
+                      <p className="text-accent text-xs font-medium">Note: We will be using plain t-shirts and print your reference design.</p>
+                    </div>
+                    <h4 className="text-gray-400 font-body text-xs uppercase tracking-wider mb-3">Printing Instructions</h4>
+                    <textarea
+                      value={printingInstructions}
+                      onChange={(e) => setPrintingInstructions(e.target.value)}
+                      placeholder="Enter any specific instructions for the printing team..."
+                      className="w-full bg-white/[0.03] border border-white/15 rounded-lg p-3 text-white focus:outline-none focus:border-accent text-sm resize-none transition-colors"
+                      rows={3}
                     />
-                    <button
-                      onClick={() => setQuantity(quantity + 1)}
-                      className="p-3 text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                  </div>
+
+                  {/* Price Summary */}
+                  <div className="border-t border-white/10 pt-5 space-y-2.5 font-body text-sm text-gray-300">
+                    <div className="flex justify-between">
+                      <span>Category:</span>
+                      <span className="text-secondary">{selectedCategory.name}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Quantity:</span>
+                      <span className="text-secondary">{pricingDetails.q} pieces</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Size:</span>
+                      <span className="text-secondary font-bold">{selectedSize}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="w-1/3">Print Styles:</span>
+                      <span className="text-secondary text-right truncate pl-4">{pricingDetails.printNames}</span>
+                    </div>
+                    <div className="h-px w-full bg-white/10 my-1"></div>
+                    <div className="flex justify-between items-center text-gray-400">
+                      <span>Base Price</span>
+                      <span>₹{pricingDetails.basePrice}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-gray-400">
+                      <span>Print Cost</span>
+                      <span>+₹{pricingDetails.printCost}</span>
+                    </div>
+                    <motion.div
+                      key={pricingDetails.totalAmount}
+                      initial={{ scale: 1.05 }}
+                      animate={{ scale: 1 }}
+                      className="flex justify-between text-xl font-heading text-accent font-bold pt-2"
                     >
-                      <FiPlus />
-                    </button>
+                      <span>Total Cost:</span>
+                      <span>{pricingDetails.isValid ? `₹${pricingDetails.totalAmount.toLocaleString()}` : 'MOQ 1 required'}</span>
+                    </motion.div>
+                  </div>
+
+                  {/* CTA */}
+                  <div className="mt-6">
+                    <Button
+                      variant="accent"
+                      className="w-full flex justify-center items-center gap-2 animate-pulse-glow"
+                      onClick={handleAddToCartOnly}
+                      disabled={isUploading}
+                    >
+                      <FiShoppingBag /> {isUploading ? 'Uploading...' : 'Add to Cart'}
+                    </Button>
                   </div>
                 </div>
-
-                <div className="mb-6">
-                  <div className="bg-accent/10 border border-accent/20 p-4 rounded-lg mb-4">
-                    <p className="text-accent text-sm font-medium">Note: We will be using plain t-shirts and print your reference design.</p>
-                  </div>
-
-                  <h3 className="text-secondary font-heading uppercase tracking-wider mb-4">
-                    Printing Instructions
-                  </h3>
-                  <textarea
-                    value={printingInstructions}
-                    onChange={(e) => setPrintingInstructions(e.target.value)}
-                    placeholder="Enter any specific instructions for the printing team (e.g. 'Make the logo 5cm wide', 'Remove the background color', etc.)"
-                    className="w-full bg-neutral-950 border border-white/20 rounded-md p-3 text-white focus:outline-none focus:border-accent text-sm resize-none"
-                    rows={3}
-                  />
-                </div>
-
-                <h3 className="text-secondary font-heading uppercase tracking-wider mb-4 border-b border-white/10 pb-4">
-                  Order Summary
-                </h3>
-
-                <div className="space-y-3 font-body text-sm text-gray-300 mb-6">
-                  <div className="flex justify-between">
-                    <span>Category:</span>
-                    <span className="text-secondary">{selectedCategory.name}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Quantity:</span>
-                    <span className="text-secondary">{pricingDetails.q} pieces</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Size:</span>
-                    <span className="text-secondary font-bold">{selectedSize}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="w-1/3">Print Styles:</span>
-                    <span className="text-secondary text-right truncate pl-4">{pricingDetails.printNames}</span>
-                  </div>
-                  <div className="h-px w-full bg-white/10 my-2"></div>
-                  <div className="flex justify-between items-center text-gray-400">
-                    <span>Base Price</span>
-                    <span>₹{pricingDetails.basePrice}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-gray-400">
-                    <span>Print Cost</span>
-                    <span>+₹{pricingDetails.printCost}</span>
-                  </div>
-                  <div className="flex justify-between text-xl font-heading text-accent font-bold mt-2">
-                    <span>Total Cost:</span>
-                    <span>{pricingDetails.isValid ? `₹${pricingDetails.totalAmount.toLocaleString()}` : 'MOQ 1 required'}</span>
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <Button
-                    variant="accent"
-                    className="w-full flex justify-center items-center gap-2"
-                    onClick={handleAddToCartOnly}
-                    disabled={isUploading}
-                  >
-                    <FiShoppingBag /> {isUploading ? 'Uploading...' : 'Add to Cart'}
-                  </Button>
-                </div>
-              </div>
+              </AnimatedSection>
 
             </div>
           </div>

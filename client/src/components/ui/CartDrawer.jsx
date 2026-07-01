@@ -33,7 +33,7 @@ export default function CartDrawer({ isOpen, onClose }) {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed top-0 right-0 h-full w-full max-w-md bg-neutral-900 shadow-2xl z-[101] flex flex-col border-l border-white/10"
+            className="fixed top-0 right-0 h-full w-full max-w-md bg-neutral-900/95 backdrop-blur-xl shadow-2xl z-[101] flex flex-col border-l border-white/10"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-white/10 shrink-0">
@@ -59,8 +59,13 @@ export default function CartDrawer({ isOpen, onClose }) {
                   </Button>
                 </div>
               ) : (
-                items.map((item) => (
-                  <div key={item.cartId} className="flex gap-4 p-4 bg-neutral-950 rounded-lg border border-white/5 relative group">
+                items.map((item, idx) => (
+                  <motion.div
+                    key={item.cartId}
+                    initial={{ opacity: 0, x: 40 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: idx * 0.05 }}
+                    className="flex gap-4 p-4 bg-neutral-950 rounded-lg border border-white/5 relative group hover:border-accent/20 transition-colors">
                     <button 
                       onClick={() => removeFromCart(item.cartId)}
                       className="absolute top-2 right-2 p-1.5 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity bg-neutral-900 rounded-md"
@@ -92,7 +97,7 @@ export default function CartDrawer({ isOpen, onClose }) {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 ))
               )}
             </div>

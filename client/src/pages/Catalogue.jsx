@@ -4,6 +4,7 @@ import { FiFilter, FiX, FiSearch } from 'react-icons/fi';
 import ProductCard from '../components/ui/ProductCard';
 import Button from '../components/ui/Button';
 import { API_URL } from '../config';
+import AnimatedSection from '../components/ui/AnimatedSection';
 
 export default function Catalogue() {
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
@@ -116,14 +117,16 @@ export default function Catalogue() {
   );
 
   return (
-    <div className="min-h-screen pt-24 pb-20 bg-primary">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen pt-24 pb-20 bg-primary relative overflow-hidden">
+      <div className="gradient-orb gradient-orb-blue w-[400px] h-[400px] -top-40 -left-40 animate-float" />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
 
         {/* Header */}
+        <AnimatedSection>
         <div className="flex flex-col md:flex-row justify-between items-end mb-12 border-b border-white/10 pb-8">
           <div>
             <h1 className="text-5xl md:text-7xl font-heading font-bold text-secondary uppercase tracking-tighter">
-              Wholesale <span className="text-accent italic">Catalogue</span>
+              Wholesale <span className="text-gradient-accent italic">Catalogue</span>
             </h1>
             <p className="text-gray-400 mt-2 font-body flex items-center gap-2">
               <span className="bg-accent/10 text-accent px-2 py-0.5 rounded-sm border border-accent/20 text-xs font-semibold uppercase tracking-wider">{catalogueName}</span>
@@ -138,6 +141,7 @@ export default function Catalogue() {
             <FiFilter /> Filters
           </button>
         </div>
+        </AnimatedSection>
 
         <div className="flex flex-col md:flex-row gap-12">
           {/* Desktop Sidebar */}
@@ -152,11 +156,25 @@ export default function Catalogue() {
                 Loading catalogue...
               </div>
             ) : filteredProducts.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
+              <motion.div
+                layout
+                initial="hidden"
+                animate="visible"
+                variants={{
+                  hidden: { opacity: 0 },
+                  visible: { opacity: 1, transition: { staggerChildren: 0.08 } }
+                }}
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12"
+              >
                 {filteredProducts.map(product => (
-                  <ProductCard key={product._id} product={product} isWholesale={true} />
+                  <motion.div
+                    key={product._id}
+                    variants={{ hidden: { opacity: 0, y: 40 }, visible: { opacity: 1, y: 0 } }}
+                  >
+                    <ProductCard product={product} isWholesale={true} />
+                  </motion.div>
                 ))}
-              </div>
+              </motion.div>
             ) : (
               <div className="flex flex-col items-center justify-center py-20 text-center border border-white/10 rounded-sm bg-neutral-900/50">
                 <p className="text-2xl font-heading text-secondary mb-4 uppercase tracking-wider">No products found</p>

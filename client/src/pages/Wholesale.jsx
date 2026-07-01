@@ -1,11 +1,12 @@
 import { useState, useMemo, useEffect } from 'react';
-
+import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { FiArrowRight, FiCheckCircle, FiZap, FiBookOpen } from 'react-icons/fi';
 import Button from '../components/ui/Button';
 import { API_URL } from '../config';
 import { useCartStore } from '../store/useCartStore';
 import { useUIStore } from '../store/useUIStore';
+import AnimatedSection from '../components/ui/AnimatedSection';
 
 const PRINT_CATEGORIES = [
   { key: 'Front', label: 'Front Prints', icon: '👕' },
@@ -154,28 +155,35 @@ export default function Wholesale() {
   }
 
   return (
-    <div className="min-h-screen pt-24 pb-20 bg-primary">
+    <div className="min-h-screen pt-24 pb-20 bg-primary relative overflow-hidden">
+      {/* Decorative orbs */}
+      <div className="gradient-orb gradient-orb-accent w-[400px] h-[400px] -top-40 -right-40 animate-float" />
+      <div className="gradient-orb gradient-orb-blue w-[300px] h-[300px] bottom-20 -left-20 animate-float" style={{ animationDelay: '2s' }} />
+
       {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-20 text-center">
-        <h1 className="text-5xl md:text-7xl font-heading font-bold text-secondary uppercase tracking-tighter mb-6">
-          Wholesale <span className="text-accent italic">Partner</span>
-        </h1>
-        <p className="text-gray-400 max-w-2xl mx-auto font-body text-lg mb-10">
-          Start your clothing brand with our premium blanks and DTF printing. MOQ applies based on catalogue.
-        </p>
-        <div className="flex flex-col sm:flex-row justify-center gap-4">
-          <Button variant="accent" size="lg" className="flex items-center gap-2" onClick={() => navigate('/catalogue')}>
-            <FiBookOpen /> View Catalogue
-          </Button>
-          <Button variant="outline" size="lg">
-            Contact Sales
-          </Button>
-        </div>
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-20 text-center relative z-10">
+        <AnimatedSection>
+          <h1 className="text-5xl md:text-8xl font-heading font-bold text-secondary uppercase tracking-tighter mb-6">
+            Wholesale <span className="text-gradient-accent italic">Partner</span>
+          </h1>
+          <p className="text-gray-400 max-w-2xl mx-auto font-body text-lg mb-10">
+            Start your clothing brand with our premium blanks and DTF printing. MOQ applies based on catalogue.
+          </p>
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
+            <Button variant="accent" size="lg" className="flex items-center gap-2 animate-pulse-glow" onClick={() => navigate('/catalogue')}>
+              <FiBookOpen /> View Catalogue
+            </Button>
+            <Button variant="outline" size="lg">
+              Contact Sales
+            </Button>
+          </div>
+        </AnimatedSection>
       </section>
 
       {/* Pricing Calculator Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-neutral-900 border border-white/10 p-8 md:p-12 rounded-lg grid grid-cols-1 lg:grid-cols-2 gap-16">
+        <AnimatedSection>
+        <div className="glass-card p-8 md:p-12 grid grid-cols-1 lg:grid-cols-2 gap-16 relative z-10">
 
           {/* Form Side */}
           <div>
@@ -376,6 +384,7 @@ export default function Wholesale() {
           </div>
 
         </div>
+        </AnimatedSection>
       </section>
     </div>
   );

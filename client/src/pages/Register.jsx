@@ -39,11 +39,14 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen pt-24 pb-12 px-4 sm:px-6 flex items-center justify-center bg-primary">
+    <div className="min-h-screen pt-24 pb-12 px-4 sm:px-6 flex items-center justify-center bg-primary relative overflow-hidden">
+      <div className="gradient-orb gradient-orb-accent w-[300px] h-[300px] top-10 -right-20 animate-float" />
+      <div className="gradient-orb gradient-orb-blue w-[250px] h-[250px] bottom-10 -left-20 animate-float" style={{ animationDelay: '2s' }} />
       <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md bg-neutral-900 rounded-xl shadow-2xl p-8 border border-white/10"
+        initial={{ opacity: 0, y: 20, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        className="w-full max-w-md glass-card shadow-2xl p-8 relative z-10"
       >
         <div className="text-center mb-8">
           <h2 className="text-3xl font-heading font-bold text-secondary tracking-wider uppercase mb-2">Create Account</h2>
@@ -56,8 +59,17 @@ export default function Register() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
+        <motion.form 
+          onSubmit={handleSubmit} 
+          className="space-y-5"
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: { opacity: 0 },
+            visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.2 } }
+          }}
+        >
+          <motion.div variants={{ hidden: { opacity: 0, x: -20 }, visible: { opacity: 1, x: 0 } }}>
             <label className="block text-sm font-medium text-gray-300 mb-1">Full Name</label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -72,9 +84,9 @@ export default function Register() {
                 placeholder="John Doe"
               />
             </div>
-          </div>
+          </motion.div>
 
-          <div>
+          <motion.div variants={{ hidden: { opacity: 0, x: -20 }, visible: { opacity: 1, x: 0 } }}>
             <label className="block text-sm font-medium text-gray-300 mb-1">Email Address</label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -89,9 +101,9 @@ export default function Register() {
                 placeholder="you@example.com"
               />
             </div>
-          </div>
+          </motion.div>
 
-          <div>
+          <motion.div variants={{ hidden: { opacity: 0, x: -20 }, visible: { opacity: 1, x: 0 } }}>
             <label className="block text-sm font-medium text-gray-300 mb-1">Password</label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -107,12 +119,14 @@ export default function Register() {
                 minLength="6"
               />
             </div>
-          </div>
+          </motion.div>
 
-          <Button type="submit" variant="accent" className="w-full py-3 mt-4" disabled={loading}>
-            {loading ? 'Creating Account...' : 'Sign Up'}
-          </Button>
-        </form>
+          <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
+            <Button type="submit" variant="accent" className="w-full py-3 mt-4 hover:scale-[1.02] transition-transform" disabled={loading}>
+              {loading ? 'Creating Account...' : 'Sign Up'}
+            </Button>
+          </motion.div>
+        </motion.form>
 
         <div className="mt-8">
           <div className="relative">

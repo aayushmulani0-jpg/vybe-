@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect, useState, useRef } from 'react';
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Link } from 'react-router-dom';
@@ -9,6 +9,7 @@ import ProductCarousel from '../components/home/ProductCarousel';
 import BrandStory from '../components/home/BrandStory';
 import ProductCard from '../components/ui/ProductCard';
 import { API_URL } from '../config';
+import HeroCanvas from '../components/home/HeroCanvas';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -35,20 +36,35 @@ function HeroBannerCarousel({ banners }) {
   if (!banners || banners.length === 0) {
     // Fallback static hero if no banners
     return (
-      <section className="relative h-screen w-full flex items-center justify-center overflow-hidden">
+      <section className="relative h-screen w-full flex items-center justify-center overflow-hidden bg-primary">
+        <HeroCanvas />
         <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-primary/60 z-10"></div>
-          <img 
+          <div className="absolute inset-0 bg-gradient-to-b from-primary/30 via-primary/60 to-primary z-10"></div>
+          <motion.img 
+            initial={{ scale: 1.1, opacity: 0 }}
+            animate={{ scale: 1, opacity: 0.3 }}
+            transition={{ duration: 1.5, ease: "easeOut" }}
             src="https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?auto=format&fit=crop&q=80&w=2000" 
             alt="Default Hero" 
-            className="w-full h-full object-cover filter grayscale opacity-50"
+            className="w-full h-full object-cover filter grayscale"
           />
         </div>
         <div className="relative z-10 text-center px-4 max-w-5xl mx-auto mt-20">
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-heading font-bold text-secondary uppercase tracking-tighter leading-none mb-4">
-            Premium Streetwear
-          </h1>
-          <Button variant="accent" size="lg">Shop Now</Button>
+          <motion.h1 
+            initial={{ y: 50, opacity: 0, rotateX: -20 }}
+            animate={{ y: 0, opacity: 1, rotateX: 0 }}
+            transition={{ duration: 0.8, delay: 0.3, type: "spring", stiffness: 100 }}
+            className="text-5xl md:text-7xl lg:text-9xl font-heading font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-500 uppercase tracking-tighter leading-none mb-6 drop-shadow-2xl"
+          >
+            Premium<br/>Streetwear
+          </motion.h1>
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+          >
+            <Button variant="accent" size="lg" className="shadow-[0_0_30px_rgba(163,255,18,0.4)] hover:shadow-[0_0_50px_rgba(163,255,18,0.6)] hover:scale-105 transition-all">Shop Now</Button>
+          </motion.div>
         </div>
       </section>
     );
@@ -58,20 +74,21 @@ function HeroBannerCarousel({ banners }) {
 
   return (
     <section className="relative h-screen w-full flex items-center justify-center overflow-hidden bg-primary">
+      <HeroCanvas />
       <AnimatePresence mode="wait">
         <motion.div
           key={currentIndex}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+          initial={{ opacity: 0, scale: 1.05 }}
+          animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
           className="absolute inset-0 z-0"
         >
-          <div className="absolute inset-0 bg-black/60 z-10"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-primary/30 via-primary/70 to-primary z-10"></div>
           <img 
             src={currentBanner.desktopImage || currentBanner.mobileImage} 
             alt={currentBanner.title} 
-            className="w-full h-full object-cover opacity-80"
+            className="w-full h-full object-cover opacity-60"
           />
         </motion.div>
       </AnimatePresence>
@@ -124,12 +141,40 @@ function HeroBannerCarousel({ banners }) {
 
 // Dynamic Collections Component
 function DynamicCollections({ collections }) {
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const sections = gsap.utils.toArray('.collection-section');
+    
+    sections.forEach((section) => {
+      gsap.fromTo(section, 
+        { y: 100, opacity: 0 }, 
+        {
+          y: 0, 
+          opacity: 1, 
+          duration: 1, 
+          ease: "power3.out",
+          scrollTrigger: {
+            trigger: section,
+            start: "top 85%",
+            toggleActions: "play none none reverse"
+          }
+        }
+      );
+    });
+    
+    return () => {
+      ScrollTrigger.getAll().forEach(t => t.kill());
+    };
+  }, [collections]);
+
   if (!collections || collections.length === 0) return null;
 
   return (
-    <div className="py-20 space-y-24 bg-primary border-t border-white/5">
+    <div ref={containerRef} className="py-20 space-y-32 bg-primary relative z-10 border-t border-white/5">
       {collections.map(collection => (
-        <section key={collection._id} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section key={collection._id} className="collection-section max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-end mb-12 border-b border-white/10 pb-6">
             <div>
               <h2 className="text-4xl md:text-5xl font-heading font-bold text-secondary uppercase tracking-tight">

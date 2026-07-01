@@ -39,9 +39,18 @@ export default function BrandStory() {
 
   return (
     <section ref={containerRef} className="h-screen bg-primary flex items-center justify-center relative overflow-hidden">
+      {/* Decorative Particle Field */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-[20%] left-[15%] w-2 h-2 bg-accent rounded-full opacity-50 animate-float" style={{ animationDelay: '0s' }} />
+        <div className="absolute top-[60%] left-[8%] w-1.5 h-1.5 bg-white rounded-full opacity-30 animate-float" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-[30%] right-[12%] w-2.5 h-2.5 bg-accent/80 rounded-full animate-float" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-[75%] right-[20%] w-2 h-2 bg-blue-400 rounded-full opacity-40 animate-float" style={{ animationDelay: '3s' }} />
+        <div className="absolute top-[45%] left-[50%] w-1 h-1 bg-white rounded-full opacity-60 animate-float" style={{ animationDelay: '0.5s' }} />
+      </div>
+      
       {/* Background Graphic */}
-      <div className="absolute inset-0 opacity-10 flex items-center justify-center pointer-events-none">
-        <h1 className="text-[20vw] font-heading font-black text-secondary uppercase tracking-tighter leading-none text-center">
+      <div className="absolute inset-0 opacity-[0.03] flex items-center justify-center pointer-events-none z-0">
+        <h1 className="text-[25vw] font-heading font-black text-secondary uppercase tracking-tighter leading-none text-center blur-sm">
           VYBE
         </h1>
       </div>
