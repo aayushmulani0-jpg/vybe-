@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { FiUploadCloud, FiTrash2, FiCheck, FiArrowLeft, FiShoppingBag, FiImage } from 'react-icons/fi';
 import Button from '../components/ui/Button';
 import { useCartStore } from '../store/useCartStore';

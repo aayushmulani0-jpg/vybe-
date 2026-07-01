@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
-import { motion } from 'framer-motion';
+
 import { useNavigate } from 'react-router-dom';
-import { FiDownload, FiCheckCircle, FiZap, FiBookOpen } from 'react-icons/fi';
+import { FiArrowRight, FiCheckCircle, FiZap, FiBookOpen } from 'react-icons/fi';
 import Button from '../components/ui/Button';
 import { API_URL } from '../config';
 import { useCartStore } from '../store/useCartStore';

@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
 import { FiHeart, FiShoppingBag } from 'react-icons/fi';
 import Button from './Button';
 import { useUIStore } from '../../store/useUIStore';

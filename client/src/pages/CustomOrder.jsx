@@ -1,11 +1,10 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { useState, useRef, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { FiUploadCloud, FiTrash2, FiCheck, FiMinus, FiPlus, FiShoppingBag, FiZap } from 'react-icons/fi';
 import Button from '../components/ui/Button';
 import { API_URL } from '../config';
 import { useCartStore } from '../store/useCartStore';
-import { useApiStore } from '../store/useApiStore';
+
 import { useUIStore } from '../store/useUIStore';
 
 // Mock T-Shirt Image URL (Plain Black)
@@ -23,16 +22,15 @@ const CATEGORIES = [
 
 export default function CustomOrder() {
   const location = useLocation();
-  const navigate = useNavigate();
   const { alert } = useUIStore();
 
   const passedState = location.state || {};
 
   const [quantity, setQuantity] = useState(passedState.pricingDetails?.q || 1);
-  const [selectedCategory, setSelectedCategory] = useState(passedState.selectedCategory || CATEGORIES[0]);
+  const selectedCategory = passedState.selectedCategory || CATEGORIES[0];
   const [selectedSize, setSelectedSize] = useState('L');
   const [selectedPrints, setSelectedPrints] = useState(passedState.selectedPrints || []);
-  const [selectedColor, setSelectedColor] = useState(null); // Will hold the color object
+  const [selectedColor, setSelectedColor] = useState(null);
   const [printingInstructions, setPrintingInstructions] = useState('');
 
   const [uploadedImages, setUploadedImages] = useState({});
@@ -47,13 +45,7 @@ export default function CustomOrder() {
   const [colors, setColors] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const [customerName, setCustomerName] = useState('');
-  const [customerEmail, setCustomerEmail] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
-  const [shippingAddress, setShippingAddress] = useState('');
-  const [city, setCity] = useState('');
-  const [state, setState] = useState('');
-  const [zipCode, setZipCode] = useState('');
+
   const [customPrintNotice, setCustomPrintNotice] = useState('');
 
   const addToCart = useCartStore(state => state.addToCart);
@@ -210,54 +202,6 @@ export default function CustomOrder() {
       alert('Added custom design to cart!', 'success', 'Success');
     } catch (err) {
       alert('Error: ' + err.message, 'error', 'Error');
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const handleCheckout = async () => {
-    if (!customerName.trim() || !customerEmail.trim() || !customerPhone.trim() || !shippingAddress.trim() || !city.trim() || !state.trim() || !zipCode.trim()) {
-      alert('Please fill out all contact and shipping details before checkout.', 'error', 'Missing Fields');
-      return;
-    }
-
-    setIsUploading(true);
-    const fullAddress = `${shippingAddress}, ${city}, ${state} - ${zipCode}`;
-
-    try {
-      const finalImages = { ...uploadedImages };
-      for (const [zone, file] of Object.entries(uploadedRawFiles)) {
-        const formData = new FormData();
-        formData.append('image', file);
-        const res = await fetch(`${API_URL}/upload`, { method: 'POST', body: formData });
-        if (!res.ok) throw new Error(`Failed to upload ${zone} design`);
-        const data = await res.json();
-        finalImages[zone] = data.url;
-      }
-
-      await submitOrder({
-        orderType: "CustomPrint",
-        customer: customerName,
-        email: customerEmail,
-        phone: customerPhone,
-        shippingAddress: fullAddress,
-        itemsList: [
-          {
-            name: `Custom Print - ${selectedCategory.name}`,
-            qty: quantity,
-            price: pricingDetails.pricePerPiece,
-            selectedSize: selectedSize,
-            selectedColor: selectedColor ? selectedColor.name : 'Black',
-            selectedColorHex: selectedColor ? selectedColor.hex : '#000000',
-            printingInstructions: printingInstructions,
-            image: Object.values(finalImages)[0] || TSHIRT_MOCKUP
-          }
-        ]
-      });
-      alert('Order placed successfully!', 'success', 'Success');
-      navigate('/shop');
-    } catch (err) {
-      alert(err.message || 'Failed to place order', 'error', 'Error');
     } finally {
       setIsUploading(false);
     }

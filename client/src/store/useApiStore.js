@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { API_URL } from '../config';
 
-export const useApiStore = create((set, get) => ({
+export const useApiStore = create((set) => ({
   products: [],
   liveCatalogue: null,
   pricingConfigs: [],

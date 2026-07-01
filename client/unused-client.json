@@ -1,0 +1,122 @@
+[
+  {
+    "path": "E:\\ayush\\vybe\\client\\src\\components\\ui\\CartDrawer.jsx",
+    "errors": [
+      {
+        "line": 1,
+        "col": 10,
+        "message": "'useState' is defined but never used."
+      },
+      {
+        "line": 4,
+        "col": 15,
+        "message": "'FiMinus' is defined but never used."
+      },
+      {
+        "line": 4,
+        "col": 24,
+        "message": "'FiPlus' is defined but never used."
+      },
+      {
+        "line": 9,
+        "col": 34,
+        "message": "'addToCart' is assigned a value but never used."
+      },
+      {
+        "line": 12,
+        "col": 9,
+        "message": "'handleUpdateQuantity' is assigned a value but never used."
+      }
+    ]
+  },
+  {
+    "path": "E:\\ayush\\vybe\\client\\src\\components\\ui\\ProductCard.jsx",
+    "errors": [
+      {
+        "line": 3,
+        "col": 10,
+        "message": "'Link' is defined but never used."
+      }
+    ]
+  },
+  {
+    "path": "E:\\ayush\\vybe\\client\\src\\components\\ui\\QuickViewModal.jsx",
+    "errors": [
+      {
+        "line": 9,
+        "col": 68,
+        "message": "'onAddToCart' is defined but never used."
+      },
+      {
+        "line": 20,
+        "col": 9,
+        "message": "'handleAddToCartOnly' is assigned a value but never used."
+      }
+    ]
+  },
+  {
+    "path": "E:\\ayush\\vybe\\client\\src\\pages\\CustomOrder.jsx",
+    "errors": [
+      {
+        "line": 1,
+        "col": 39,
+        "message": "'useMemo' is defined but never used."
+      },
+      {
+        "line": 3,
+        "col": 10,
+        "message": "'motion' is defined but never used."
+      }
+    ]
+  },
+  {
+    "path": "E:\\ayush\\vybe\\client\\src\\pages\\DesignUpload.jsx",
+    "errors": [
+      {
+        "line": 3,
+        "col": 10,
+        "message": "'motion' is defined but never used."
+      }
+    ]
+  },
+  {
+    "path": "E:\\ayush\\vybe\\client\\src\\pages\\Login.jsx",
+    "errors": [
+      {
+        "line": 26,
+        "col": 14,
+        "message": "'err' is defined but never used."
+      },
+      {
+        "line": 35,
+        "col": 14,
+        "message": "'err' is defined but never used."
+      }
+    ]
+  },
+  {
+    "path": "E:\\ayush\\vybe\\client\\src\\pages\\Register.jsx",
+    "errors": [
+      {
+        "line": 27,
+        "col": 14,
+        "message": "'err' is defined but never used."
+      },
+      {
+        "line": 36,
+        "col": 14,
+        "message": "'err' is defined but never used."
+      }
+    ]
+  },
+  {
+    "path": "E:\\ayush\\vybe\\client\\src\\pages\\Wholesale.jsx",
+    "errors": [
+      {
+        "line": 4,
+        "col": 10,
+        "message": "'FiDownload' is defined but never used."
+      }
+    ]
+  }
+]

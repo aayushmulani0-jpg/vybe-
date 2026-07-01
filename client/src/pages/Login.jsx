@@ -23,7 +23,7 @@ export default function Login() {
     try {
       await login(email, password);
       navigate(from);
-    } catch (err) {
+    } catch {
       // Error is handled by store and displayed below
     }
   };
@@ -32,7 +32,7 @@ export default function Login() {
     try {
       await googleLogin(credentialResponse.credential);
       navigate(from);
-    } catch (err) {
+    } catch {
       // Error handled
     }
   };

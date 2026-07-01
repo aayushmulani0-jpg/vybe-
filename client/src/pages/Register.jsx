@@ -24,7 +24,7 @@ export default function Register() {
     try {
       await register(name, email, password);
       navigate(from);
-    } catch (err) {
+    } catch {
       // Error is handled by store
     }
   };
@@ -33,7 +33,7 @@ export default function Register() {
     try {
       await googleLogin(credentialResponse.credential);
       navigate(from);
-    } catch (err) {
+    } catch {
       // Error handled
     }
   };

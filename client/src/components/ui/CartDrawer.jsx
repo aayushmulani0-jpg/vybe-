@@ -1,18 +1,12 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiX, FiMinus, FiPlus, FiTrash2, FiShoppingBag, FiCheck } from 'react-icons/fi';
+import { FiX, FiTrash2, FiShoppingBag, FiCheck } from 'react-icons/fi';
 import { useCartStore } from '../../store/useCartStore';
 import Button from './Button';
 
 export default function CartDrawer({ isOpen, onClose }) {
-  const { items, removeFromCart, addToCart, getCartTotal, clearCart } = useCartStore();
+  const { items, removeFromCart, getCartTotal, clearCart } = useCartStore();
   const navigate = useNavigate();
-
-  const handleUpdateQuantity = (item, newQuantity) => {
-    if (newQuantity <= 0) return;
-    // ...
-  };
 
   const handleCheckoutAll = () => {
     if (items.length === 0) return;

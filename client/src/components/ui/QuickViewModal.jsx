@@ -6,7 +6,7 @@ import Button from './Button';
 import { useCartStore } from '../../store/useCartStore';
 import { useUIStore } from '../../store/useUIStore';
 
-export default function QuickViewModal({ product, isOpen, onClose, onAddToCart }) {
+export default function QuickViewModal({ product, isOpen, onClose }) {
   const navigate = useNavigate();
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
@@ -16,16 +16,6 @@ export default function QuickViewModal({ product, isOpen, onClose, onAddToCart }
   const { alert } = useUIStore();
 
   if (!product) return null;
-
-  const handleAddToCartOnly = () => {
-    if (product.colors?.length > 0 && !selectedColor) {
-      alert('Please select a color', 'error', 'Color Required');
-      return;
-    }
-    addToCart({ ...product, selectedSize, selectedColor, quantity });
-    alert('Added to cart!', 'success', 'Added');
-    onClose();
-  };
 
   const allImages = [product.image, ...(product.images || [])].filter(Boolean);
 
