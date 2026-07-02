@@ -40,7 +40,7 @@ export default function ProductCard({ product, isWholesale = false, onQuickAdd, 
           className="w-full h-full flex items-center justify-center relative"
         >
           <motion.img 
-            src={isHovered && product.hoverImage ? product.hoverImage : product.image}
+            src={isHovered && (product.hoverImage || (product.images && product.images.length > 0 ? product.images[0] : null)) ? (product.hoverImage || product.images[0]) : product.image}
             alt={product.name}
             className={`w-full h-full object-contain drop-shadow-2xl ${product.stockStatus === 'Out of Stock' ? 'opacity-40 grayscale' : ''}`}
             initial={{ scale: 1 }}
