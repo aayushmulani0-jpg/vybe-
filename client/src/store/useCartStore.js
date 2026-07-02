@@ -43,6 +43,21 @@ export const useCartStore = create(
         if (token) get().syncToBackend(token);
       },
 
+      updateQuantity: (cartId, newQty) => {
+        if (newQty < 1) {
+          get().removeFromCart(cartId);
+          return;
+        }
+        set((state) => ({
+          items: state.items.map(item =>
+            item.cartId === cartId ? { ...item, quantity: newQty } : item
+          )
+        }));
+        
+        const token = useAuthStore.getState().token;
+        if (token) get().syncToBackend(token);
+      },
+
       clearCart: () => {
         set({ items: [] });
         

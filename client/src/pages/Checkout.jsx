@@ -26,7 +26,7 @@ export default function Checkout() {
 
   // Form State
   const [isEditing, setIsEditing] = useState(false);
-  const [addressForm, setAddressForm] = useState({ _id: '', address: '', phone: '' });
+  const [addressForm, setAddressForm] = useState({ _id: '', address: '', city: '', state: '', zipCode: '', phone: '' });
   const [isSavingAddress, setIsSavingAddress] = useState(false);
 
   // Order State
@@ -79,18 +79,18 @@ export default function Checkout() {
   };
 
   const handleAddNew = () => {
-    setAddressForm({ _id: '', address: '', phone: '' });
+    setAddressForm({ _id: '', address: '', city: '', state: '', zipCode: '', phone: '' });
     setIsEditing(true);
   };
 
   const handleEdit = (addr) => {
-    setAddressForm({ _id: addr._id, address: addr.street || '', phone: addr.phone || '' });
+    setAddressForm({ _id: addr._id, address: addr.street || '', city: addr.city || '', state: addr.state || '', zipCode: addr.zipCode || '', phone: addr.phone || '' });
     setIsEditing(true);
   };
 
   const handleSaveAddress = async (e) => {
     e.preventDefault();
-    if (!addressForm.address.trim() || !addressForm.phone.trim()) {
+    if (!addressForm.address.trim() || !addressForm.city.trim() || !addressForm.state.trim() || !addressForm.zipCode.trim() || !addressForm.phone.trim()) {
       alert("Please fill in all address fields.", "error", "Missing Details");
       return;
     }
@@ -110,9 +110,9 @@ export default function Checkout() {
         },
         body: JSON.stringify({
           street: addressForm.address,
-          city: '-',
-          state: '-',
-          zipCode: '-',
+          city: addressForm.city,
+          state: addressForm.state,
+          zipCode: addressForm.zipCode,
           phone: addressForm.phone,
           isDefault: addresses.length === 0
         })
@@ -350,7 +350,10 @@ export default function Checkout() {
                             <span className="text-[10px] uppercase tracking-wider bg-white/10 text-gray-300 px-2 py-0.5 rounded-full ml-2">Default</span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-300 mb-2 leading-relaxed">{addr.street}</p>
+                        <p className="text-sm text-gray-300 mb-1 leading-relaxed">{addr.street}</p>
+                        {(addr.city && addr.city !== '-') && (
+                          <p className="text-xs text-gray-400 mb-2">{addr.city}{addr.state && addr.state !== '-' ? `, ${addr.state}` : ''}{addr.zipCode && addr.zipCode !== '-' ? ` - ${addr.zipCode}` : ''}</p>
+                        )}
                         <div className="flex items-center gap-2 text-sm text-gray-400">
                           <FiPhone className="w-3.5 h-3.5" />
                           <span>{addr.phone}</span>
@@ -394,27 +397,65 @@ export default function Checkout() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">Full Shipping Address</label>
+                      <label className="block text-sm font-medium text-gray-400 mb-2">Street Address</label>
                       <textarea
                         required
-                        placeholder="Enter your complete delivery address..."
+                        placeholder="House no, Building, Street, Area..."
                         value={addressForm.address}
                         onChange={e => setAddressForm({ ...addressForm, address: e.target.value })}
-                        rows={3}
+                        rows={2}
                         className="w-full bg-neutral-900 border border-white/20 rounded-md p-3 text-white focus:border-accent focus:ring-1 focus:ring-accent outline-none custom-scrollbar resize-none transition-all text-sm"
                       />
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">Mobile Number</label>
-                      <input
-                        required
-                        type="tel"
-                        placeholder="e.g. +91 98765 43210"
-                        value={addressForm.phone}
-                        onChange={e => setAddressForm({ ...addressForm, phone: e.target.value })}
-                        className="w-full bg-neutral-900 border border-white/20 rounded-md p-3 text-white focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all text-sm"
-                      />
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-400 mb-2">City</label>
+                        <input
+                          required
+                          type="text"
+                          placeholder="e.g. Mumbai"
+                          value={addressForm.city}
+                          onChange={e => setAddressForm({ ...addressForm, city: e.target.value })}
+                          className="w-full bg-neutral-900 border border-white/20 rounded-md p-3 text-white focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-400 mb-2">State</label>
+                        <input
+                          required
+                          type="text"
+                          placeholder="e.g. Maharashtra"
+                          value={addressForm.state}
+                          onChange={e => setAddressForm({ ...addressForm, state: e.target.value })}
+                          className="w-full bg-neutral-900 border border-white/20 rounded-md p-3 text-white focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all text-sm"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-400 mb-2">PIN Code</label>
+                        <input
+                          required
+                          type="text"
+                          placeholder="e.g. 400001"
+                          value={addressForm.zipCode}
+                          onChange={e => setAddressForm({ ...addressForm, zipCode: e.target.value })}
+                          className="w-full bg-neutral-900 border border-white/20 rounded-md p-3 text-white focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-400 mb-2">Mobile Number</label>
+                        <input
+                          required
+                          type="tel"
+                          placeholder="+91 98765 43210"
+                          value={addressForm.phone}
+                          onChange={e => setAddressForm({ ...addressForm, phone: e.target.value })}
+                          className="w-full bg-neutral-900 border border-white/20 rounded-md p-3 text-white focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all text-sm"
+                        />
+                      </div>
                     </div>
 
                     <div className="pt-2">

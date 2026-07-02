@@ -14,9 +14,10 @@ export default function Navbar() {
   const [hidden, setHidden] = useState(false);
 
   const { scrollY } = useScroll();
+  const cartItems = useCartStore(state => state.items);
   const getCartCount = useCartStore(state => state.getCartCount);
   const user = useAuthStore(state => state.user);
-  const cartCount = getCartCount();
+  const cartCount = cartItems.length > 0 ? getCartCount() : 0;
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     const previous = scrollY.getPrevious();
