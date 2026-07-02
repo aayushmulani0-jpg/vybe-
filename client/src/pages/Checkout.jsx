@@ -114,7 +114,7 @@ export default function Checkout() {
           state: '-',
           zipCode: '-',
           phone: addressForm.phone,
-          isDefault: addresses.length === 0 // Make default if it's their first address
+          isDefault: addresses.length === 0
         })
       });
 
@@ -132,7 +132,6 @@ export default function Checkout() {
       const updatedAddresses = await res.json();
       setAddresses(updatedAddresses);
 
-      // Auto-select the address we just created/edited
       if (method === 'POST') {
         setSelectedAddressId(updatedAddresses[updatedAddresses.length - 1]._id);
       } else {
@@ -313,7 +312,6 @@ export default function Checkout() {
       <div className="gradient-orb gradient-orb-accent w-[300px] h-[300px] -top-20 -right-20 animate-float" />
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 relative z-10">
 
-        {/* Left Column: Shipping details */}
         <AnimatedSection direction="left">
           <h2 className="text-3xl font-heading font-bold text-secondary uppercase tracking-wider mb-8">Checkout</h2>
 
@@ -321,7 +319,6 @@ export default function Checkout() {
             <h3 className="text-xl font-semibold text-white mb-6">Delivery Details</h3>
 
             <AnimatePresence mode="wait">
-              {/* ADDRESS LIST MODE */}
               {!isEditing && (
                 <motion.div
                   key="list"
