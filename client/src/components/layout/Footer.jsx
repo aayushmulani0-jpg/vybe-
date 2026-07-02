@@ -68,7 +68,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-gray-500">
-          <p>&copy; {new Date().getFullYear()} Vybe Streetwear. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Vybe Streetwear. All rights reserved. <span className="text-accent ml-2">v1.1.0</span></p>
           <div className="flex space-x-4 mt-4 md:mt-0">
             <a href="#" className="hover:text-secondary transition-colors">Privacy Policy</a>
             <a href="#" className="hover:text-secondary transition-colors">Terms of Service</a>
