@@ -4,6 +4,7 @@ import { motion, useScroll, useMotionValueEvent, AnimatePresence } from 'framer-
 import { FiShoppingBag, FiSearch, FiHeart, FiUser, FiMenu, FiX } from 'react-icons/fi';
 import { useCartStore } from '../../store/useCartStore';
 import { useAuthStore } from '../../store/useAuthStore';
+import { useFavoritesStore } from '../../store/useFavoritesStore';
 import CartDrawer from '../ui/CartDrawer';
 import { API_URL } from '../../config';
 
@@ -18,6 +19,7 @@ export default function Navbar() {
   const getCartCount = useCartStore(state => state.getCartCount);
   const user = useAuthStore(state => state.user);
   const cartCount = cartItems.length > 0 ? getCartCount() : 0;
+  const favCount = useFavoritesStore(state => state.getFavoritesCount)();
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     const previous = scrollY.getPrevious();
@@ -103,9 +105,18 @@ export default function Navbar() {
               <Link to={user ? "/profile" : "/login"} className="text-secondary hover:text-accent transition-colors duration-300 hidden sm:block">
                 <FiUser className="w-5 h-5" />
               </Link>
-              <button className="text-secondary hover:text-accent transition-colors duration-300 hidden sm:block">
+              <Link to="/wishlist" className="text-secondary hover:text-accent transition-colors duration-300 hidden sm:block relative">
                 <FiHeart className="w-5 h-5" />
-              </button>
+                {favCount > 0 && (
+                  <motion.span
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute -top-2 -right-2 bg-accent text-primary text-xs font-bold w-4 h-4 rounded-full flex items-center justify-center"
+                  >
+                    {favCount}
+                  </motion.span>
+                )}
+              </Link>
               <button
                 className="text-secondary hover:text-accent transition-colors duration-300 relative group"
                 onClick={() => setIsCartOpen(true)}
@@ -170,7 +181,12 @@ export default function Navbar() {
                 className="pt-8 flex gap-8 border-t border-white/10 w-full justify-center"
               >
                 <Link to={user ? "/profile" : "/login"} onClick={() => setIsMobileMenuOpen(false)} className="text-secondary hover:text-accent"><FiUser className="w-6 h-6" /></Link>
-                <button className="text-secondary hover:text-accent"><FiHeart className="w-6 h-6" /></button>
+                <Link to="/wishlist" onClick={() => setIsMobileMenuOpen(false)} className="text-secondary hover:text-accent relative">
+                  <FiHeart className="w-6 h-6" />
+                  {favCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-accent text-primary text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{favCount}</span>
+                  )}
+                </Link>
                 <button className="text-secondary hover:text-accent"><FiSearch className="w-6 h-6" /></button>
               </motion.div>
             </nav>

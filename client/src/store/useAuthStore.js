@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { API_URL } from '../config';
 import { useCartStore } from './useCartStore';
+import { useFavoritesStore } from './useFavoritesStore';
 
 export const useAuthStore = create(
   persist(
@@ -23,6 +24,7 @@ export const useAuthStore = create(
           if (!res.ok) throw new Error(data.message || 'Login failed');
           set({ user: data, token: data.token, loading: false });
           useCartStore.getState().fetchFromBackend(data.token);
+          useFavoritesStore.getState().fetchFromBackend(data.token);
           return data;
         } catch (err) {
           set({ error: err.message, loading: false });
@@ -42,6 +44,7 @@ export const useAuthStore = create(
           if (!res.ok) throw new Error(data.message || 'Registration failed');
           set({ user: data, token: data.token, loading: false });
           useCartStore.getState().fetchFromBackend(data.token);
+          useFavoritesStore.getState().fetchFromBackend(data.token);
           return data;
         } catch (err) {
           set({ error: err.message, loading: false });
@@ -61,6 +64,7 @@ export const useAuthStore = create(
           if (!res.ok) throw new Error(data.message || 'Google login failed');
           set({ user: data, token: data.token, loading: false });
           useCartStore.getState().fetchFromBackend(data.token);
+          useFavoritesStore.getState().fetchFromBackend(data.token);
           return data;
         } catch (err) {
           set({ error: err.message, loading: false });
@@ -71,6 +75,7 @@ export const useAuthStore = create(
       logout: () => {
         set({ user: null, token: null });
         useCartStore.getState().clearCart();
+        useFavoritesStore.getState().clearFavorites();
       },
 
       clearError: () => set({ error: null })

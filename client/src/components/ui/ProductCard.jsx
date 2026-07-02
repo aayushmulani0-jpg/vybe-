@@ -1,37 +1,17 @@
 import { useState, useRef } from 'react';
-import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { FiHeart, FiShoppingBag } from 'react-icons/fi';
 import Button from './Button';
 import { useUIStore } from '../../store/useUIStore';
+import { useFavoritesStore } from '../../store/useFavoritesStore';
 
 export default function ProductCard({ product, isWholesale = false, onQuickAdd, collectionName }) {
   const [isHovered, setIsHovered] = useState(false);
   const setQuickViewProduct = useUIStore(state => state.setQuickViewProduct);
+  const toggleFavorite = useFavoritesStore(state => state.toggleFavorite);
+  const isFavorite = useFavoritesStore(state => state.isFavorite);
+  const isFav = isFavorite(product._id);
   const ref = useRef(null);
-
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  const mouseXSpring = useSpring(x, { stiffness: 300, damping: 40 });
-  const mouseYSpring = useSpring(y, { stiffness: 300, damping: 40 });
-  const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["10deg", "-10deg"]);
-  const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-10deg", "10deg"]);
-
-  const handleMouseMove = (e) => {
-    if (!ref.current) return;
-    const rect = ref.current.getBoundingClientRect();
-    const width = rect.width;
-    const height = rect.height;
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-    x.set(mouseX / width - 0.5);
-    y.set(mouseY / height - 0.5);
-  };
-
-  const handleMouseLeave = () => {
-    x.set(0);
-    y.set(0);
-    setIsHovered(false);
-  };
 
   const handleQuickAdd = (e) => {
     e.preventDefault();
@@ -46,17 +26,14 @@ export default function ProductCard({ product, isWholesale = false, onQuickAdd, 
     <motion.div 
       ref={ref}
       className="group relative flex flex-col w-full max-w-sm"
-      onMouseMove={handleMouseMove}
       onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={handleMouseLeave}
-      style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
+      onMouseLeave={() => setIsHovered(false)}
       whileHover={{ scale: 1.02 }}
       transition={{ duration: 0.3 }}
     >
       {/* Image Container */}
       <div 
         className="relative aspect-square overflow-hidden bg-neutral-900 mb-4 flex items-center justify-center p-2 rounded-xl transition-shadow duration-500 hover:shadow-[0_20px_50px_rgba(163,255,18,0.15)]"
-        style={{ transform: "translateZ(30px)" }}
       >
         <button 
           onClick={handleQuickAdd}
@@ -99,9 +76,25 @@ export default function ProductCard({ product, isWholesale = false, onQuickAdd, 
         </div>
 
         {/* Wishlist Button */}
-        <button className="absolute top-3 right-3 p-2 bg-primary/20 backdrop-blur-sm rounded-full text-secondary hover:text-accent hover:bg-primary/50 transition-all z-10">
-          <FiHeart className="w-4 h-4" />
-        </button>
+        <motion.button
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite(product._id); }}
+          className={`absolute top-3 right-3 p-2 backdrop-blur-sm rounded-full transition-all z-10 ${
+            isFav
+              ? 'bg-accent/20 text-accent'
+              : 'bg-primary/20 text-secondary hover:text-accent hover:bg-primary/50'
+          }`}
+          whileTap={{ scale: 0.75 }}
+          animate={isFav ? { scale: [1, 1.3, 1] } : {}}
+          transition={{ duration: 0.3 }}
+        >
+          {isFav ? (
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+              <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
+            </svg>
+          ) : (
+            <FiHeart className="w-4 h-4" />
+          )}
+        </motion.button>
 
         {/* Quick Add (Visible on Hover) */}
         <motion.div 
