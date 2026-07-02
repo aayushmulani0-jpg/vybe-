@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import ThemeProvider from './components/ThemeProvider';
+import ErrorBoundary from './components/ErrorBoundary';
 import Layout from './components/layout/Layout';
 import Home from './pages/Home';
 import Shop from './pages/Shop';
@@ -16,25 +17,27 @@ import Profile from './pages/Profile';
 
 function App() {
   return (
-    <ThemeProvider>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route path="shop" element={<Shop />} />
-          <Route path="wholesale" element={<Wholesale />} />
-          <Route path="wholesale/upload" element={<DesignUpload />} />
-          <Route path="custom" element={<CustomOrder />} />
-          <Route path="custom-print" element={<CustomOrder />} />
-          <Route path="catalogue" element={<Catalogue />} />
-          <Route path="about" element={<About />} />
-          <Route path="login" element={<Login />} />
-          <Route path="register" element={<Register />} />
-          <Route path="checkout" element={<Checkout />} />
-          <Route path="order-success" element={<OrderSuccess />} />
-          <Route path="profile" element={<Profile />} />
-        </Route>
-      </Routes>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Home />} />
+            <Route path="shop" element={<Shop />} />
+            <Route path="wholesale" element={<Wholesale />} />
+            <Route path="wholesale/upload" element={<DesignUpload />} />
+            <Route path="custom" element={<CustomOrder />} />
+            <Route path="custom-print" element={<CustomOrder />} />
+            <Route path="catalogue" element={<Catalogue />} />
+            <Route path="about" element={<About />} />
+            <Route path="login" element={<Login />} />
+            <Route path="register" element={<Register />} />
+            <Route path="checkout" element={<Checkout />} />
+            <Route path="order-success" element={<OrderSuccess />} />
+            <Route path="profile" element={<Profile />} />
+          </Route>
+        </Routes>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 
