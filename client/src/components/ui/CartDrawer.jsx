@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiX, FiTrash2, FiShoppingBag, FiMinus, FiPlus, FiArrowRight } from 'react-icons/fi';
+import { FiX, FiShoppingBag, FiMinus, FiPlus, FiArrowRight } from 'react-icons/fi';
 import { useCartStore } from '../../store/useCartStore';
 import Button from './Button';
 
@@ -21,7 +21,7 @@ export default function CartDrawer({ isOpen, onClose }) {
       {isOpen && (
         <>
           {/* Backdrop */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -30,7 +30,7 @@ export default function CartDrawer({ isOpen, onClose }) {
           />
 
           {/* Drawer */}
-          <motion.div 
+          <motion.div
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
@@ -49,7 +49,7 @@ export default function CartDrawer({ isOpen, onClose }) {
                   </p>
                 )}
               </div>
-              <button 
+              <button
                 onClick={onClose}
                 className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors"
               >
@@ -82,19 +82,19 @@ export default function CartDrawer({ isOpen, onClose }) {
                     >
                       {/* Product Image */}
                       <div className="w-[88px] h-[88px] bg-neutral-900 rounded-lg overflow-hidden shrink-0 border border-white/5">
-                        <img 
-                          src={item.image || (item.uploadedImages && Object.values(item.uploadedImages)[0]) || 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=400'} 
-                          alt={item.name} 
+                        <img
+                          src={item.image || (item.uploadedImages && Object.values(item.uploadedImages)[0]) || 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=400'}
+                          alt={item.name}
                           className="w-full h-full object-contain p-1"
                         />
                       </div>
-                      
+
                       {/* Product Details */}
                       <div className="flex-1 min-w-0 flex flex-col justify-between">
                         <div>
                           <div className="flex items-start justify-between gap-2">
                             <h4 className="text-sm font-semibold text-white leading-tight pr-2 line-clamp-2">{item.name}</h4>
-                            <button 
+                            <button
                               onClick={() => removeFromCart(item.cartId)}
                               className="p-1 text-gray-600 hover:text-red-400 transition-colors shrink-0"
                               title="Remove"
@@ -102,7 +102,7 @@ export default function CartDrawer({ isOpen, onClose }) {
                               <FiX className="w-4 h-4" />
                             </button>
                           </div>
-                          
+
                           {/* Meta Tags */}
                           <div className="flex flex-wrap gap-1.5 mt-1.5">
                             {item.selectedColor && (
@@ -128,7 +128,7 @@ export default function CartDrawer({ isOpen, onClose }) {
                           <span className="text-base font-heading font-bold text-accent">
                             ₹{((item.price || item.pricePerPiece || 0) * (item.quantity || 1)).toLocaleString()}
                           </span>
-                          
+
                           {/* Quantity Controls */}
                           <div className="flex items-center gap-0 border border-white/10 rounded-full overflow-hidden">
                             <button
@@ -166,17 +166,17 @@ export default function CartDrawer({ isOpen, onClose }) {
                   </div>
                   <p className="text-[11px] text-gray-600">Shipping & taxes calculated at checkout</p>
                 </div>
-                
+
                 {/* Actions */}
                 <div className="px-6 pb-5 space-y-3">
-                  <Button 
-                    variant="accent" 
+                  <Button
+                    variant="accent"
                     className="w-full py-4 text-sm font-bold flex items-center justify-center gap-2"
                     onClick={handleCheckout}
                   >
                     Checkout <FiArrowRight className="w-4 h-4" />
                   </Button>
-                  <button 
+                  <button
                     onClick={clearCart}
                     className="w-full text-xs text-gray-600 hover:text-gray-400 transition-colors py-1"
                   >

@@ -1,18 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 
-/**
- * DesignCanvas — Interactive T-shirt mockup with draggable/resizable design overlays.
- *
- * Props:
- *   mockupImage       - URL of the blank T-shirt image
- *   printZones        - Array of active print zone objects with { name, boundingBox: {top, left, width, height} }
- *   uploadedImages    - { [zoneName]: imageUrl }
- *   designTransforms  - { [zoneName]: { x, y, scale } }
- *   onTransformChange - (zoneName, transform) => void
- *   activeZone        - currently selected zone name
- *   onZoneClick       - (zoneName) => void
- *   selectedColorHex  - hex color for tinting (optional)
- */
 export default function DesignCanvas({
   mockupImage,
   printZones = [],
@@ -127,11 +114,10 @@ export default function DesignCanvas({
               width: `${bounds.width}%`,
               height: `${bounds.height}%`,
             }}
-            className={`border-2 border-dashed flex items-center justify-center overflow-hidden transition-all duration-300 cursor-pointer ${
-              isActive
-                ? 'border-accent/70 bg-accent/5 z-20 shadow-[0_0_20px_rgba(163,255,18,0.15)]'
-                : 'border-white/15 hover:border-white/40 z-10'
-            }`}
+            className={`border-2 border-dashed flex items-center justify-center overflow-hidden transition-all duration-300 cursor-pointer ${isActive
+              ? 'border-accent/70 bg-accent/5 z-20 shadow-[0_0_20px_rgba(163,255,18,0.15)]'
+              : 'border-white/15 hover:border-white/40 z-10'
+              }`}
             onClick={() => onZoneClick?.(zone.name)}
           >
             {hasImage ? (
@@ -173,9 +159,8 @@ export default function DesignCanvas({
               </div>
             ) : (
               <span
-                className={`text-[10px] uppercase font-bold text-center p-1 pointer-events-none ${
-                  isActive ? 'text-accent' : 'text-gray-500'
-                }`}
+                className={`text-[10px] uppercase font-bold text-center p-1 pointer-events-none ${isActive ? 'text-accent' : 'text-gray-500'
+                  }`}
               >
                 {zone.name}
               </span>

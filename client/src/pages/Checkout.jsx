@@ -7,7 +7,7 @@ import { API_URL } from '../config';
 import Button from '../components/ui/Button';
 import { useUIStore } from '../store/useUIStore';
 import AnimatedSection from '../components/ui/AnimatedSection';
-import { FiCheck, FiEdit2, FiPlus, FiMapPin, FiPhone } from 'react-icons/fi';
+import { FiEdit2, FiPlus, FiMapPin, FiPhone } from 'react-icons/fi';
 
 export default function Checkout() {
   const user = useAuthStore(state => state.user);
